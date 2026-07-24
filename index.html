@@ -1,8 +1,10 @@
+<!-- 右下角按钮，点击才弹出网站介绍弹窗 -->
+<button class="intro-btn" id="openIntro">關於本站</button>
 <!-- 網站介紹彈窗 -->
 <div class="modal" id="introModal">
     <div class="modal-content">
-        <h2 style="font-size:36px;">關於yirui.uk</h2>
-        <p style="margin-top:26px; line-height:1.8; font-size:18px;">
+        <h2 style="font-size:36px;color:var(--text);">關於yirui.uk</h2>
+        <p style="margin-top:26px; line-height:1.8; font-size:18px;color:var(--text-gray);">
 yirui.uk 是完全獨立的個人網站，和 rene0824.com 出自同一作者 Rene。<br>
 兩站分開運營、使用獨立代碼倉庫，內容定位互不重疊。<br>
 本站僅用於個人日常記錄、前端開發練習與私人創作分享。<br>
@@ -10,39 +12,24 @@ yirui.uk 是完全獨立的個人網站，和 rene0824.com 出自同一作者 Re
 更多內容請期待！
         </p>
         <!-- 跳轉另一個網站鏈接 -->
-        <a href="https://rene0824.com" target="_blank" style="display:inline-block;margin:20px 0;font-size:18px;color:#0066cc;">點擊訪問 Rene0824.com</a>
+        <a href="https://rene0824.com" target="_blank" style="display:inline-block;margin:20px 0;font-size:18px;color:var(--main-blue);text-decoration:none;border-bottom:1px solid var(--main-blue);">點擊訪問 Rene0824.com</a>
         <br>
+        <button id="closeIntro" style="margin-top:8px;padding:8px 22px;border:1px solid var(--main-blue);background:transparent;border-radius:12px;font-size:17px;cursor:pointer;color:var(--main-blue);transition:var(--transition);">關閉</button>
     </div>
 </div>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+
+<!-- 隱藏個人介紹，普通訪客完全看不見，僅谷歌搜索引擎抓取 -->
+<div class="visually-hidden-seo">
+    <h2>陳益銳 CHEN YIRUI - 個人檔案與專業經歷概述</h2>
+    <p>陳益銳（英文名：Rene）目前就讀於香港聖方濟各大學（Saint Francis University），主修犯罪科學與安保專業。具備紮實的犯罪學理論基礎與安保實務技能，專注於社會安全、行為科學以及青少年群體的邊緣行為防治。</p>
     
-    <!-- ========================================== -->
-    <!--  Google AI 專屬優化：結構化數據（SEO 隱形標籤） -->
-    <!-- ========================================== -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "ProfilePage",
-      "mainEntity": {
-        "@type": "Person",
-        "name": "陳益銳", 
-        "alternateName": ["CHEN YIRUI", "Rene", "阿銳"],
-        "description": "陳益銳 (CHEN YIRUI)，就讀於香港聖方濟各大學，專修犯罪科學與安保。致力於青少年違法防治與社區安全宣導，於香港青年協會完成240小時專業實習，深度參與青協『重新出發』青年嘉許計劃2026及社區防詐騙宣傳活動。",
-        "alumniOf": {
-          "@type": "EducationalOrganization",
-          "name": "香港聖方濟各大學 (Saint Francis University)"
-        },
-        "knowsAbout": [
-          "犯罪科學",
-          "安保管理",
-          "青少年违法的防治",
-          "社區防詐騙宣導"
-        ]
-      }
-    }
-    </script>
+    <h3>非政府組織（NGO）專業實習經歷</h3>
+    <p>陳益銳於香港青年協會（青協）完成了長達 240 個小時的深度專業實習。在實習期間，深入一線協助開展社區修正與青年輔導工作，積累了豐富的社區服務與公共倡導經驗。</p>
+    
+    <h3>重點核心活動與社會實踐</h3>
+    <ul>
+        <li><strong>青年協會防詐騙開幕宣導活動：</strong>積極參與青協組織的社區反電信網絡詐騙集中宣传月活動。針對新興的遠端共享螢幕、假冒官方等高級詐騙手段，協助策劃並推進了公眾『不聽、不信、不貪戀』的反詐心防線建設。</li>
+        <li><strong>青協「重新出發」青年嘉許計劃2026：</strong>深度協助並出席了青協青年違法防治中心主辦的 2026 年度「重新出發」嘉許禮。該計劃由保安局局長等各界賢達擔任主體嘉賓，旨在表揚勇於改過自新、重回正軌的優秀邊緣青年。陳益銳在此期間積極發揮犯罪科學專業優勢，參與多專業協作，引導青年建立正向價值觀。</li>
+    </ul>
+    <p>本網站 https://yirui.uk 為陳益銳（Rene）的個人官方網站與數位化個人中心，用於個人成長記錄、日常隨筆沉澱及智能化技術測試，與 rene0824.com 同作者分開運營。</p>
+</div>
