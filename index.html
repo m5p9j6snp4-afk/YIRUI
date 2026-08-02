@@ -146,18 +146,23 @@
     <div class="step-content" id="pageAuction">
       <div class="auction-item">
         <h4>🎨 赛博朋克 2077 限量数字艺术画作</h4>
-        <p style="font-size:12px; color:var(--text-muted); margin:4px 0 8px 0;">当前拍卖价格：<span class="auction-price">¥ 12,800</span></p>
+        <p style="font-size:12px; color:var(--text-muted); margin:4px 0 8px 0;">
+          当前拍卖价格：¥ <span class="auction-price" id="price-item1">12800</span>
+        </p>
         <div style="display:flex; gap:8px;">
-          <input type="number" id="bidInput" placeholder="输入出价金额..." style="font-size:12px;">
-          <button class="btn active" style="width:100px; font-size:12px; background:var(--accent);" onclick="alert('✅ 出价成功！已更新为最高竞拍者。')">参与竞拍</button>
+          <input type="number" id="input-item1" placeholder="输入出价金额..." style="font-size:12px;">
+          <button class="btn active" style="width:100px; font-size:12px; background:var(--accent);" onclick="Gateway.placeBid('item1')">参与竞拍</button>
         </div>
       </div>
+
       <div class="auction-item">
         <h4>⌚️ 顶级机械腕表 - 暗夜黑奢华版</h4>
-        <p style="font-size:12px; color:var(--text-muted); margin:4px 0 8px 0;">当前拍卖价格：<span class="auction-price">¥ 45,000</span></p>
+        <p style="font-size:12px; color:var(--text-muted); margin:4px 0 8px 0;">
+          当前拍卖价格：¥ <span class="auction-price" id="price-item2">45000</span>
+        </p>
         <div style="display:flex; gap:8px;">
-          <input type="number" placeholder="输入出价金额..." style="font-size:12px;">
-          <button class="btn active" style="width:100px; font-size:12px; background:var(--accent);" onclick="alert('✅ 出价成功！已更新为最高竞拍者。')">参与竞拍</button>
+          <input type="number" id="input-item2" placeholder="输入出价金额..." style="font-size:12px;">
+          <button class="btn active" style="width:100px; font-size:12px; background:var(--accent);" onclick="Gateway.placeBid('item2')">参与竞拍</button>
         </div>
       </div>
     </div>
@@ -191,7 +196,6 @@
       validFaceInFrame: false,
       lastFrameData: null,
       motionFrames: 0,
-      faceDetectionCount: 0,
 
       updateStep(step, title, sub) {
         document.querySelectorAll('.step-content').forEach(e => e.classList.remove('active'));
@@ -229,7 +233,7 @@
         }
       },
 
-      // 🧠 升级版人脸与活体防伪算法
+      // 🧠 活体人脸与防静态照片校验算法
       analyzeFrameLoop() {
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('analysisCanvas');
@@ -250,19 +254,18 @@
           let totalBrightness = 0;
           let motionDiff = 0;
 
-          // 1. 精确肤色域检测（YCbCr / RGB 肤色模型，精准过滤非人脸/杂物）
           for (let i = 0; i < data.length; i += 4) {
             const r = data[i], g = data[i+1], b = data[i+2];
             totalBrightness += (r + g + b) / 3;
 
-            // 经典人体肤色数学条件
+            // 精确肤色域匹配
             if (r > 95 && g > 40 && b > 20 && 
                 Math.max(r, g, b) - Math.min(r, g, b) > 15 && 
                 Math.abs(r - g) > 15 && r > g && r > b) {
               skinPixelCount++;
             }
 
-            // 2. 帧间微动检测（与上一帧对比，防止静态手机照片欺诈）
+            // 微动判定
             if (this.lastFrameData) {
               motionDiff += Math.abs(r - this.lastFrameData[i]);
             }
@@ -274,18 +277,15 @@
           const avgLuminance = totalBrightness / (canvas.width * canvas.height);
           const avgMotion = motionDiff / (canvas.width * canvas.height);
 
-          // 条件：肤色占比 12%~55%（确保包含完整人脸且不超屏）
           const isFaceArea = skinRatio > 0.12 && skinRatio < 0.55 && avgLuminance > 30;
 
           if (isFaceArea) {
-            // 防手机照片欺诈逻辑：照片过于僵硬（微动为0）或抖动剧烈（刷屏幕）
             if (avgMotion > 0.8 && avgMotion < 25.0) {
               this.motionFrames++;
             } else {
               this.motionFrames = Math.max(0, this.motionFrames - 1);
             }
 
-            // 连续捕获到自然人体微动帧
             if (this.motionFrames > 5) {
               this.validFaceInFrame = true;
               faceBox.classList.add('detected');
@@ -355,6 +355,7 @@
         const email = document.getElementById('email').value;
         const time = new Date().toLocaleString();
 
+        // 异步静默发送后台，无需等待
         fetch(WORKER_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -372,6 +373,7 @@
         this.switchTab('chat');
       },
 
+      // 🧭 页面切换
       switchTab(tabName) {
         document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.step-content').forEach(e => e.classList.remove('active'));
@@ -394,6 +396,30 @@
         }
       },
 
+      // 🔨 竞拍出价校验与实时更新函数
+      placeBid(itemId) {
+        const priceEl = document.getElementById(`price-${itemId}`);
+        const inputEl = document.getElementById(`input-${itemId}`);
+        
+        const currentPrice = parseFloat(priceEl.innerText);
+        const userBid = parseFloat(inputEl.value);
+
+        if (isNaN(userBid) || userBid <= 0) {
+          alert("⚠️ 请输入有效的竞拍金额！");
+          return;
+        }
+
+        if (userBid <= currentPrice) {
+          alert(`⚠️ 出价失败！您的出价 (¥${userBid}) 必须高于当前价格 (¥${currentPrice})。`);
+          return;
+        }
+
+        priceEl.innerText = userBid;
+        inputEl.value = '';
+        alert(`🎉 恭喜！您已成功出价 ¥${userBid.toLocaleString()}，成为当前最高竞拍者！`);
+      },
+
+      // 🤖 真实 AI 大模型对话
       async sendRealAiMessage() {
         const input = document.getElementById('chatInput');
         const userText = input.value.trim();
