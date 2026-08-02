@@ -3,160 +3,312 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RESTRICTED TERMINAL // ACCESS CONTROL</title>
+  <title>Identity & Access Management // Secure Gateway</title>
   <style>
     :root {
-      --bg-dark: #05070f;
-      --card-bg: rgba(12, 16, 32, 0.85);
-      --cyan: #00f3ff;
-      --green: #00ff66;
-      --text: #e2e8f0;
-      --font-code: 'Courier New', Courier, monospace;
+      --bg: #090d16;
+      --panel: #111827;
+      --border: #1f2937;
+      --border-focus: #3b82f6;
+      --text-main: #f9fafb;
+      --text-muted: #9ca3af;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --success: #10b981;
+      --danger: #ef4444;
+      --font-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+
     body {
-      background-color: var(--bg-dark);
-      color: var(--text);
+      background-color: var(--bg);
+      color: var(--text-main);
       min-height: 100vh;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
+      justify-content: space-between;
       align-items: center;
-      background-image: 
-        linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
-      background-size: 24px 24px;
+      padding: 20px;
     }
-    .auth-card {
-      width: 90%;
-      max-width: 400px;
-      padding: 30px;
-      background: var(--card-bg);
-      border: 1px solid rgba(0, 243, 255, 0.3);
-      border-radius: 12px;
-      backdrop-filter: blur(16px);
-      box-shadow: 0 0 35px rgba(0, 243, 255, 0.15);
-    }
-    .card-header {
-      font-family: var(--font-code);
-      font-size: 13px;
-      color: var(--cyan);
-      margin-bottom: 20px;
-      border-bottom: 1px dashed rgba(0, 243, 255, 0.2);
-      padding-bottom: 8px;
+
+    /* 顶部企业 Header */
+    .top-bar {
+      width: 100%;
+      max-width: 1200px;
       display: flex;
       justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--text-muted);
     }
-    .layer-step { display: none; }
-    .layer-step.active { display: block; }
-    .layer-title { font-size: 16px; font-weight: bold; color: #fff; margin-bottom: 6px; }
-    .layer-desc { font-size: 12px; color: #64748b; margin-bottom: 20px; }
-    .form-group { margin-bottom: 16px; }
-    .form-label { display: block; font-family: var(--font-code); font-size: 11px; color: var(--cyan); margin-bottom: 6px; }
-    .form-input {
-      width: 100%; padding: 12px; background: rgba(0, 0, 0, 0.5);
-      border: 1px solid rgba(0, 243, 255, 0.3); border-radius: 6px; color: #fff;
-      font-family: var(--font-code); outline: none;
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      color: var(--text-main);
+      letter-spacing: 0.5px;
     }
-    .cyber-btn {
-      width: 100%; padding: 12px; background: transparent; border: 1px solid var(--cyan);
-      color: var(--cyan); font-family: var(--font-code); font-weight: bold; cursor: pointer; margin-top: 10px;
+
+    .brand-icon {
+      width: 12px;
+      height: 12px;
+      background: var(--accent);
+      border-radius: 2px;
     }
-    .scan-circle {
-      width: 100px; height: 100px; margin: 20px auto; border: 2px dashed var(--cyan);
-      border-radius: 50%; display: flex; justify-content: center; align-items: center; position: relative; cursor: pointer;
+
+    /* 主卡片容器 */
+    .auth-card {
+      width: 100%;
+      max-width: 440px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 32px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+      margin: auto 0;
     }
-    .scan-line {
-      width: 100%; height: 2px; background: var(--cyan); box-shadow: 0 0 10px var(--cyan);
-      position: absolute; top: 0; display: none; animation: scan 1.2s infinite alternate ease-in-out;
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 4px;
     }
-    .scanning .scan-line { display: block; }
-    @keyframes scan { 0% { top: 0%; } 100% { top: 100%; } }
+
+    .card-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+
+    /* 步进状态条 */
+    .stepper {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 24px;
+    }
+
+    .step-bar {
+      flex: 1;
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      transition: background 0.3s;
+    }
+
+    .step-bar.active { background: var(--accent); }
+    .step-bar.completed { background: var(--success); }
+
+    /* 表单控件 */
+    .form-group { margin-bottom: 18px; }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px 14px;
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus { border-color: var(--border-focus); }
+
+    .btn {
+      width: 100%;
+      padding: 11px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn:hover { background: var(--accent-hover); }
+
+    /* 步骤控制 */
+    .step-content { display: none; }
+    .step-content.active { display: block; }
+
+    /* 审计日志面板 (Audit Log) */
+    .audit-box {
+      background: #000;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: #6b7280;
+      height: 90px;
+      overflow-y: auto;
+      margin-top: 16px;
+    }
+
+    .log-line { margin-bottom: 4px; }
+    .log-line.info { color: #9ca3af; }
+    .log-line.success { color: var(--success); }
+    .log-line.error { color: var(--danger); }
+
+    /* 页脚 */
+    .footer {
+      font-size: 12px;
+      color: #4b5563;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
 
+  <!-- 顶部状态栏 -->
+  <header class="top-bar">
+    <div class="brand">
+      <div class="brand-icon"></div>
+      <span>AEGIS ZERO-TRUST GATEWAY</span>
+    </div>
+    <div>GATEWAY ID: <span style="font-family: var(--font-mono);">us-east-1a-gw02</span></div>
+  </header>
+
+  <!-- 主验证面板 -->
   <div class="auth-card">
-    <div class="card-header">
-      <span id="layerIndicator">SECURITY // LAYER 1/3</span>
-      <span style="color: var(--green);">● SYSTEM ONLINE</span>
+    <div class="card-title" id="displayTitle">访问鉴权 (1/3)</div>
+    <div class="card-subtitle" id="displaySub">请输入您的 Enterprise SSO 凭证</div>
+
+    <!-- 进度条 -->
+    <div class="stepper">
+      <div class="step-bar active" id="bar1"></div>
+      <div class="step-bar" id="bar2"></div>
+      <div class="step-bar" id="bar3"></div>
     </div>
 
-    <!-- 第一层 -->
-    <div class="layer-step active" id="layer1">
-      <div class="layer-title">第一层验证：凭证识别</div>
-      <div class="layer-desc">请输入您的机密访问账号与量子密钥</div>
+    <!-- 步骤 1：域账号与主体身份 -->
+    <div class="step-content active" id="step1">
       <div class="form-group">
-        <label class="form-label">IDENTITY HANDLE</label>
-        <input type="text" class="form-input" id="username" placeholder="输入代号" value="Neo_01">
+        <label>CORPORATE EMAIL / DOMAIN ID</label>
+        <input type="text" id="email" value="alex.chen@aegis-tech.internal">
       </div>
       <div class="form-group">
-        <label class="form-label">ACCESS KEY</label>
-        <input type="password" class="form-input" id="password" value="123456">
+        <label>PASSWORD</label>
+        <input type="password" id="password" value="••••••••••••">
       </div>
-      <button class="cyber-btn" onclick="nextLayer(2)">验证基础凭证 ➔</button>
+      <button class="btn" onclick="Gateway.submitStep1()">下一步：设备与环境校验</button>
     </div>
 
-    <!-- 第二层 -->
-    <div class="layer-step" id="layer2">
-      <div class="layer-title">第二层验证：动态安全码</div>
-      <div class="layer-desc">请输入 6 位动态验证码（测试码：888888）</div>
+    <!-- 步骤 2：硬件/动态令牌 2FA -->
+    <div class="step-content" id="step2">
       <div class="form-group">
-        <label class="form-label">OTP SECURITY CODE</label>
-        <input type="text" class="form-input" id="otpCode" placeholder="6 位验证码" maxlength="6">
+        <label>HARDWARE TOKEN / TOTP CODE (测试输入: 888888)</label>
+        <input type="text" id="totp" placeholder="6-digit code" maxlength="6" style="font-family: var(--font-mono); letter-spacing: 4px; text-align: center;">
       </div>
-      <button class="cyber-btn" onclick="verifyOTP()">提交动态密钥 ➔</button>
+      <button class="btn" onclick="Gateway.submitStep2()">校验动态安全协议</button>
     </div>
 
-    <!-- 第三层 -->
-    <div class="layer-step" id="layer3">
-      <div class="layer-title">第三层验证：生物特征扫描</div>
-      <div class="layer-desc">点击下方扫描核心，触发生物特征与信标校验</div>
-      <div class="scan-circle" id="scanCircle" onclick="triggerScan()">
-        <div class="scan-line"></div>
-        <span style="font-family: var(--font-code); font-size: 11px; color: var(--cyan);">[ 点击扫描 ]</span>
+    <!-- 步骤 3：FIDO2 / WebAuthn 硬件物理密钥 -->
+    <div class="step-content" id="step3">
+      <div style="text-align: center; padding: 10px 0 20px 0;">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="1.5" style="margin-bottom: 12px;">
+          <rect x="5" y="11" width="14" height="10" rx="2"/>
+          <circle cx="12" cy="16" r="1"/>
+          <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+        </svg>
+        <p style="font-size: 13px; color: var(--text-muted);">请插入您的 YubiKey 或使用 Touch ID / Face ID 进行硬件级解密</p>
       </div>
-      <div id="scanStatus" style="text-align: center; font-family: var(--font-code); font-size: 12px; color: var(--cyan);">等待生物触控...</div>
+      <button class="btn" onclick="Gateway.submitStep3()">调用 WebAuthn 握手</button>
+    </div>
+
+    <!-- 终端系统实时日志 -->
+    <div class="audit-box" id="auditLog">
+      <div class="log-line info">[SYS-INIT] Gateway connection established.</div>
+      <div class="log-line info">[SEC-CHECK] TLS 1.3 Cipher Suite Verified.</div>
     </div>
   </div>
 
+  <footer class="footer">
+    Protected by Aegis Security Engine | Zero Trust Compliance Level 4
+  </footer>
+
   <script>
-    // 检查如果已经登录，直接跳到 dashboard
+    const Gateway = {
+      step: 1,
+
+      log(msg, type = 'info') {
+        const box = document.getElementById('auditLog');
+        const time = new Date().toISOString().split('T')[1].slice(0, 8);
+        const line = document.createElement('div');
+        line.className = `log-line ${type}`;
+        line.innerText = `[${time}] ${msg}`;
+        box.appendChild(line);
+        box.scrollTop = box.scrollHeight;
+      },
+
+      updateUI(step, title, sub) {
+        this.step = step;
+        document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
+        document.getElementById(`step${step}`).classList.add('active');
+        
+        document.getElementById('displayTitle').innerText = title;
+        document.getElementById('displaySub').innerText = sub;
+
+        // 更新进度条
+        document.getElementById(`bar${step}`).classList.add('active');
+        if (step > 1) document.getElementById(`bar${step-1}`).classList.add('completed');
+      },
+
+      submitStep1() {
+        const email = document.getElementById('email').value;
+        if (!email) return alert("请输入完整的域账号！");
+
+        this.log(`Attempting SSO authentication for ${email}...`);
+        setTimeout(() => {
+          this.log(`[PASS] Primary credentials valid. Risk score: 0.02 (Low)`, 'success');
+          this.updateUI(2, "访问鉴权 (2/3)", "检测到二次因素验证 (2FA) 策略要求");
+        }, 600);
+      },
+
+      submitStep2() {
+        const code = document.getElementById('totp').value;
+        if (code === "888888") {
+          this.log(`[PASS] TOTP token payload validated.`, 'success');
+          this.updateUI(3, "访问鉴权 (3/3)", "需要完成 FIDO2 硬件令牌设备授权");
+        } else {
+          this.log(`[ERR] Invalid TOTP token signature.`, 'error');
+          alert("动态安全码无效！（测试请输入：888888）");
+        }
+      },
+
+      submitStep3() {
+        this.log(`Invoking navigator.credentials.get()...`);
+        
+        setTimeout(() => {
+          this.log(`[PASS] WebAuthn assertion signed. Issue Session JWT.`, 'success');
+          localStorage.setItem("SECURE_AUTH_TOKEN", "GRANTED_LEVEL_ROOT");
+
+          setTimeout(() => {
+            window.location.href = "dashboard.html";
+          }, 800);
+        }, 1200);
+      }
+    };
+
+    // 初始化检查
     if (localStorage.getItem("SECURE_AUTH_TOKEN") === "GRANTED_LEVEL_ROOT") {
       window.location.href = "dashboard.html";
-    }
-
-    function nextLayer(layerNum) {
-      document.querySelectorAll('.layer-step').forEach(p => p.classList.remove('active'));
-      document.getElementById('layer' + layerNum).classList.add('active');
-      document.getElementById('layerIndicator').innerText = `SECURITY // LAYER ${layerNum}/3`;
-    }
-
-    function verifyOTP() {
-      const otp = document.getElementById('otpCode').value;
-      if (otp === "888888") {
-        nextLayer(3);
-      } else {
-        alert("动态安全码错误！（测试请输入：888888）");
-      }
-    }
-
-    function triggerScan() {
-      const circle = document.getElementById('scanCircle');
-      const status = document.getElementById('scanStatus');
-      circle.classList.add('scanning');
-      status.innerText = "正在扫描生物特征...";
-
-      setTimeout(() => {
-        circle.classList.remove('scanning');
-        status.innerText = "【授权通过】正在解密系统...";
-        status.style.color = "var(--green)";
-        
-        // 存入凭证并跳转
-        localStorage.setItem("SECURE_AUTH_TOKEN", "GRANTED_LEVEL_ROOT");
-        setTimeout(() => {
-          window.location.href = "dashboard.html";
-        }, 1000);
-      }, 1500);
     }
   </script>
 </body>
