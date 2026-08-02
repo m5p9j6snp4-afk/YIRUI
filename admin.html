@@ -3,86 +3,105 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>云端登录人脸抓拍 & IP 审计后台</title>
+  <title>Geek Market - 管理后台</title>
   <style>
     :root { --bg: #0b0f19; --card-bg: #111827; --accent: #2563eb; --text: #f3f4f6; --text-muted: #9ca3af; --border: #1f2937; }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
     body { background: var(--bg); color: var(--text); padding: 20px; }
     .container { max-width: 1100px; margin: 0 auto; }
-    h2 { font-size: 20px; color: #38bdf8; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
-    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    h1 { font-size: 20px; margin-bottom: 20px; color: #38bdf8; display: flex; justify-content: space-between; align-items: center; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+    .stat-card { background: var(--card-bg); border: 1px solid var(--border); padding: 15px; border-radius: 8px; }
+    .stat-title { font-size: 12px; color: var(--text-muted); margin-bottom: 5px; }
+    .stat-value { font-size: 22px; font-weight: bold; color: #38bdf8; }
+    .section-title { font-size: 16px; margin: 25px 0 15px 0; border-left: 3px solid var(--accent); padding-left: 8px; }
+    .table-container { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
     th, td { padding: 12px 15px; border-bottom: 1px solid var(--border); }
-    th { background: #1f2937; color: var(--text-muted); font-weight: 600; }
-    tr:hover { background: rgba(255, 255, 255, 0.02); }
-    .thumb { width: 45px; height: 35px; object-fit: cover; border-radius: 4px; cursor: pointer; transition: transform 0.2s; }
-    .thumb:hover { transform: scale(3.5); }
-    .error-msg { color: #f87171; text-align: center; padding: 30px; font-size: 14px; }
+    th { background: #1f2937; color: var(--text-muted); }
+    tr:hover { background: rgba(255,255,255,0.02); }
+    .thumb { width: 45px; height: 45px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); background: #000; }
+    .btn { background: var(--accent); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+    .btn:hover { background: #1d4ed8; }
   </style>
 </head>
 <body>
+
   <div class="container">
-    <h2>📸 云端登录人脸抓拍 & IP 审计后台</h2>
-    <div class="card">
+    <h1>
+      <span>🛡️ GEEK-MARKET 管理后台</span>
+      <button class="btn" onclick="loadAdminData()">🔄 刷新数据</button>
+    </h1>
+
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-title">总抓拍访问量</div>
+        <div class="stat-value" id="statCount">0</div>
+      </div>
+    </div>
+
+    <div class="section-title">👤 访客抓拍与登录日志</div>
+    <div class="table-container">
       <table>
         <thead>
           <tr>
-            <th style="width: 80px;">抓拍照片</th>
-            <th>登录账号 (Email)</th>
-            <th>访问 IP 地址</th>
+            <th>抓拍照片</th>
+            <th>电子邮箱</th>
+            <th>IP 地址</th>
             <th>国家/地区</th>
-            <th>抓拍时间</th>
+            <th>访问时间</th>
           </tr>
         </thead>
-        <tbody id="logTableBody">
-          <tr><td colspan="5" style="text-align:center; color: var(--text-muted); padding: 30px;">⏳ 正在加载审计数据...</td></tr>
+        <tbody id="logsTableBody">
+          <tr><td colspan="5" style="text-align:center; color:var(--text-muted);">正在加载日志...</td></tr>
         </tbody>
       </table>
     </div>
   </div>
 
   <script>
-    // 🔗 请修改为你的 Worker 线上地址 (必须以 https:// 开头，末尾不要加斜杠)
-    const WORKER_URL = "https://face-logger.bmk4byvf9b.workers.dev";
+    // 🔗 线上 Worker 自定义域名
+    const WORKER_URL = "https://api.yirui.uk";
 
-    async function loadLogs() {
-      const tbody = document.getElementById('logTableBody');
+    async function loadAdminData() {
+      const tbody = document.getElementById('logsTableBody');
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">⏳ 正在同步云端数据...</td></tr>`;
+
       try {
-        // 请求加上 ?type=logs 参数，确保后端返回纯数组
-        const res = await fetch(WORKER_URL + "?type=logs");
-        if (!res.ok) throw new Error("网络响应异常");
+        // 请求后台的 logs 数据
+        const res = await fetch(`${WORKER_URL}?type=logs`);
+        if (!res.ok) throw new Error(`HTTP 错误: ${res.status}`);
         
         const logs = await res.json();
-        
-        if (!Array.isArray(logs)) {
-          throw new Error("返回数据格式不正确");
-        }
+        document.getElementById('statCount').innerText = logs.length;
 
-        if (logs.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: var(--text-muted); padding: 30px;">暂无抓拍记录</td></tr>`;
+        if (!logs || logs.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">暂无访客抓拍记录</td></tr>`;
           return;
         }
 
         let html = '';
         logs.forEach(log => {
-          const photoHtml = log.photo ? `<img src="${log.photo}" class="thumb" title="悬停放大">` : `<span style="color:var(--text-muted)">无照片</span>`;
+          const photoHtml = log.photo ? `<img src="${log.photo}" class="thumb">` : `<span style="color:var(--text-muted);">无照片</span>`;
           html += `
             <tr>
               <td>${photoHtml}</td>
-              <td>${log.email || '未知用户'}</td>
-              <td>${log.ip || '未知 IP'}</td>
+              <td>${log.email || '未填写'}</td>
+              <td>${log.ip || '未知'}</td>
               <td>${log.country || '未知'}</td>
-              <td>${log.timestamp || '未知时间'}</td>
+              <td>${log.timestamp || '未知'}</td>
             </tr>`;
         });
         tbody.innerHTML = html;
-      } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="5" class="error-msg">❌ 数据拉取失败: ${err.message}</td></tr>`;
+
+      } catch (e) {
+        console.error("加载后台日志失败", e);
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#f87171;">❌ 加载失败: ${e.message}</td></tr>`;
       }
     }
 
-    // 页面加载时自动拉取
-    loadLogs();
+    // 页面加载后自动获取数据
+    loadAdminData();
   </script>
 </body>
 </html>
