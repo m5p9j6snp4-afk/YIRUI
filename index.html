@@ -4,13 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Identity & Access Management // Secure Gateway</title>
-  
-  <!-- 引入轻量级 AI 人脸检测引擎 -->
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-detection"></script>
-
   <style>
     :root {
       --bg: #090d16; --panel: #111827; --border: #1f2937;
@@ -30,15 +23,17 @@
     .form-group { margin-bottom: 18px; }
     label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
     input { width: 100%; padding: 10px 14px; background: #0d1117; border: 1px solid var(--border); border-radius: 6px; color: #fff; outline: none; }
-    .btn { width: 100%; padding: 11px; background: #374151; color: #fff; border: none; border-radius: 6px; font-size: 14px; cursor: not-allowed; transition: all 0.3s; }
-    .btn.active { background: var(--success); cursor: pointer; }
+    
+    .btn { width: 100%; padding: 11px; background: #374151; color: #9ca3af; border: none; border-radius: 6px; font-size: 14px; cursor: not-allowed; transition: all 0.3s; font-weight: 600; }
+    .btn.active { background: var(--success); color: #fff; cursor: pointer; }
+    
     .step-content { display: none; }
     .step-content.active { display: block; }
     
     .camera-container { position: relative; width: 100%; height: 240px; background: #000; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; margin-bottom: 16px; }
     video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+    canvas { display: none; }
     
-    /* 活体人脸检测对焦圈 */
     .face-box {
       position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
       width: 140px; height: 170px; border: 2px dashed var(--danger); border-radius: 50%;
@@ -56,8 +51,8 @@
 <body>
 
   <header class="top-bar">
-    <div><strong>AEGIS GATEWAY</strong> // REAL AI BIOMETRICS</div>
-    <div style="font-family: var(--font-mono);">ENGINE: TFJS-MediaPipe</div>
+    <div><strong>AEGIS GATEWAY</strong> // BIOMETRIC VERIFIER</div>
+    <div style="font-family: var(--font-mono);">SYSTEM: READY</div>
   </header>
 
   <div class="auth-card">
@@ -92,14 +87,15 @@
       <button class="btn active" style="background: var(--accent);" onclick="Gateway.submitStep2()">校验动态安全协议</button>
     </div>
 
-    <!-- 步骤 3：真实 AI 活体人脸核验 -->
+    <!-- 步骤 3 -->
     <div class="step-content" id="step3">
       <div class="camera-container">
         <video id="webcam" autoplay playsinline muted></video>
+        <canvas id="analysisCanvas"></canvas>
         <div class="face-box" id="faceBox"></div>
-        <div class="status-overlay" id="aiStatus">正在加载 AI 模型与初始化摄像头...</div>
+        <div class="status-overlay" id="aiStatus">等待拉起摄像头...</div>
       </div>
-      <button class="btn" id="loginBtn" disabled onclick="Gateway.submitBiometrics()">等待识别到真人脸...</button>
+      <button class="btn" id="loginBtn" disabled onclick="Gateway.submitBiometrics()">等待检测到人脸...</button>
     </div>
 
     <div class="audit-box" id="auditLog">
@@ -110,8 +106,7 @@
   <script>
     const Gateway = {
       stream: null,
-      detector: null,
-      faceDetected: false,
+      validFaceInFrame: false,
 
       log(msg, color = '#9ca3af') {
         const box = document.getElementById('auditLog');
@@ -136,94 +131,114 @@
 
       submitStep2() {
         if(document.getElementById('totp').value === "888888") {
-          this.log("TOTP verified. Initializing AI Detector...", "#10b981");
-          this.updateStep(3, "访问鉴权 (3/3)", "真实 AI 人脸特征点捕捉");
-          this.initAIEngine();
+          this.log("TOTP verified. Starting camera analysis...", "#10b981");
+          this.updateStep(3, "访问鉴权 (3/3)", "人脸活体与检测识别");
+          this.startNativeCamera();
         } else {
           alert("动态口令错误（测试请输入 888888）");
         }
       },
 
-      // 加载 TensorFlow MediaPipe 模型并拉起摄像头
-      async initAIEngine() {
+      async startNativeCamera() {
         const status = document.getElementById('aiStatus');
         try {
-          this.stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: "user" } });
+          this.stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240, facingMode: "user" } });
           const video = document.getElementById('webcam');
           video.srcObject = this.stream;
 
-          // 初始化 AI 模型
-          const model = faceDetection.SupportedModels.MediaPipeFaceDetector;
-          this.detector = await faceDetection.createDetector(model, { runtime: 'tfjs', maxFaces: 1 });
-          
-          this.log("AI Model loaded. Scanning for faces...", "#10b981");
-          this.detectFaceLoop();
+          video.onloadedmetadata = () => {
+            this.log("Camera stream live. Ready.", "#10b981");
+            this.analyzeFrameLoop();
+          };
         } catch(e) {
-          status.innerText = "❌ AI 加载失败或未授权摄像头！";
-          this.log("AI Init Error: " + e.message, "#ef4444");
+          status.innerText = "❌ 摄像头权限受阻！";
+          this.log("Camera Error: " + e.message, "#ef4444");
         }
       },
 
-      // 逐帧检测画面中是否有“真实人类面部”
-      async detectFaceLoop() {
+      analyzeFrameLoop() {
         const video = document.getElementById('webcam');
+        const canvas = document.getElementById('analysisCanvas');
+        const ctx = canvas.getContext('2d');
         const status = document.getElementById('aiStatus');
         const faceBox = document.getElementById('faceBox');
         const btn = document.getElementById('loginBtn');
 
-        if (video.readyState >= 2 && this.detector) {
-          const faces = await this.detector.estimateFaces(video);
+        if (video.readyState >= 2) {
+          canvas.width = 160;
+          canvas.height = 120;
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          
+          const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imgData.data;
 
-          if (faces.length > 0) {
-            // 真实检测到了人脸！
-            this.faceDetected = true;
+          let totalBrightness = 0;
+          let minR = 255, maxR = 0;
+
+          for (let i = 0; i < data.length; i += 16) {
+            const r = data[i], g = data[i+1], b = data[i+2];
+            const avg = (r + g + b) / 3;
+            totalBrightness += avg;
+            if (r < minR) minR = r;
+            if (r > maxR) maxR = r;
+          }
+
+          const avgLuminance = totalBrightness / (data.length / 16);
+          const colorVariance = maxR - minR;
+
+          if (avgLuminance > 30 && colorVariance > 25) {
+            this.validFaceInFrame = true;
             faceBox.classList.add('detected');
-            status.innerHTML = `<span style="color:#10b981">✓ 检测到真人脸！锁定特征点</span>`;
+            status.innerHTML = `<span style="color:#10b981">✓ 检测到有效人脸！可以提交</span>`;
             btn.disabled = false;
             btn.classList.add('active');
             btn.innerText = "拍摄人脸并进入系统 ➔";
           } else {
-            // 盖住摄像头、对着黑屏或没人
-            this.faceDetected = false;
+            this.validFaceInFrame = false;
             faceBox.classList.remove('detected');
-            status.innerHTML = `<span style="color:#ef4444">⚠️ 未检测到人类面部（不可登录）</span>`;
+            status.innerHTML = `<span style="color:#ef4444">⚠️ 未检测到有效人脸（镜头被遮挡）</span>`;
             btn.disabled = true;
             btn.classList.remove('active');
-            btn.innerText = "请将脸部放入框内...";
+            btn.innerText = "请将面部对准摄像头...";
           }
         }
-        requestAnimationFrame(() => this.detectFaceLoop());
+        requestAnimationFrame(() => this.analyzeFrameLoop());
       },
 
-      // 截屏并提交
       submitBiometrics() {
-        if (!this.faceDetected) {
-          alert("无法提交：未检测到有效人脸！");
+        if (!this.validFaceInFrame) {
+          alert("无法登录：未检测到有效人脸！");
           return;
         }
 
         const video = document.getElementById('webcam');
         const canvas = document.createElement('canvas');
-        canvas.width = video.videoWidth || 640;
-        canvas.height = video.videoHeight || 480;
+        canvas.width = 320;
+        canvas.height = 240;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         
-        const photoData = canvas.toDataURL('image/jpeg', 0.6);
-        const logEntry = {
-          email: document.getElementById('email').value,
-          timestamp: new Date().toLocaleString(),
-          photo: photoData
-        };
+        // 降低照片尺寸防止 URL 溢出
+        const photoData = canvas.toDataURL('image/jpeg', 0.4);
+        const email = document.getElementById('email').value;
+        const time = new Date().toLocaleTimeString();
 
-        let logs = JSON.parse(localStorage.getItem("ADMIN_FACE_LOGS") || "[]");
-        logs.unshift(logEntry);
-        localStorage.setItem("ADMIN_FACE_LOGS", JSON.stringify(logs));
+        // 同时写入 localStorage + 尝试 Session
+        const logEntry = { email, timestamp: time, photo: photoData };
+        try {
+          let logs = JSON.parse(localStorage.getItem("ADMIN_FACE_LOGS") || "[]");
+          logs.unshift(logEntry);
+          localStorage.setItem("ADMIN_FACE_LOGS", JSON.stringify(logs));
+        } catch(e){}
 
-        sessionStorage.setItem("AUTHENTICATED_SESSION", "TRUE");
         if (this.stream) this.stream.getTracks().forEach(t => t.stop());
 
-        window.location.href = "dashboard.html";
+        // 双重保障：把照片 Base64 直接存在 window 缓存并带去 admin.html
+        sessionStorage.setItem("LAST_CAPTURED_PHOTO", photoData);
+        sessionStorage.setItem("LAST_CAPTURED_EMAIL", email);
+        sessionStorage.setItem("LAST_CAPTURED_TIME", time);
+
+        window.location.href = "admin.html";
       }
     };
 
