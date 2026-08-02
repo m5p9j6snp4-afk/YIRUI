@@ -1,312 +1,71 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CYBER-X // 神经通讯终端</title>
-  <style>
-    /* ================= 基础赛博样式 & 变量 ================= */
-    :root {
-      --bg-color: #080911;
-      --card-bg: rgba(18, 22, 40, 0.65);
-      --primary-cyan: #00f3ff;
-      --primary-purple: #9d4edd;
-      --text-main: #e2e8f0;
-      --text-dim: #64748b;
-      --font-code: "Courier New", Courier, monospace;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
-
-    body {
-      background-color: var(--bg-color);
-      color: var(--text-main);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow-x: hidden;
-      /* 背景网格 HUD 效果 */
-      background-image: 
-        linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
-      background-size: 30px 30px;
-    }
-
-    /* ================= 终端卡片容器 (Glassmorphism) ================= */
-    .cyber-card {
-      width: 420px;
-      padding: 28px;
-      background: var(--card-bg);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(0, 243, 255, 0.2);
-      border-radius: 12px;
-      box-shadow: 0 0 30px rgba(0, 243, 255, 0.1), inset 0 0 15px rgba(0, 243, 255, 0.05);
-      position: relative;
-    }
-
-    /* 顶部黑科技 HUD 状态栏 */
-    .hud-header {
-      display: flex;
-      justify-content: space-between;
-      font-family: var(--font-code);
-      font-size: 11px;
-      color: var(--primary-cyan);
-      margin-bottom: 20px;
-      letter-spacing: 1px;
-    }
-
-    .hud-status {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .dot {
-      width: 6px;
-      height: 6px;
-      background: var(--primary-cyan);
-      border-radius: 50%;
-      box-shadow: 0 0 8px var(--primary-cyan);
-      animation: pulse 1.5s infinite;
-    }
-
-    /* 手机产品预览区 */
-    .product-box {
-      width: 100%;
-      height: 220px;
-      background: radial-gradient(circle, rgba(157, 78, 221, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
-      border: 1px dashed rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      position: relative;
-      margin-bottom: 20px;
-    }
-
-    .phone-mockup {
-      width: 80px;
-      height: 150px;
-      border: 2px solid var(--primary-cyan);
-      border-radius: 12px;
-      box-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
-      position: relative;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: rgba(0, 0, 0, 0.5);
-    }
-
-    .phone-mockup::after {
-      content: 'CYBER-X';
-      font-family: var(--font-code);
-      font-size: 9px;
-      color: var(--primary-cyan);
-      letter-spacing: 2px;
-    }
-
-    .product-title {
-      font-size: 20px;
-      font-weight: 700;
-      color: #fff;
-      margin-bottom: 6px;
-      letter-spacing: 1px;
-    }
-
-    .product-desc {
-      font-size: 12px;
-      color: var(--text-dim);
-      margin-bottom: 20px;
-      line-height: 1.5;
-    }
-
-    /* 规格参数网格 */
-    .specs-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 24px;
-      font-family: var(--font-code);
-    }
-
-    .spec-item {
-      background: rgba(255, 255, 255, 0.03);
-      border-left: 2px solid var(--primary-purple);
-      padding: 8px 10px;
-      font-size: 11px;
-    }
-
-    .spec-label { color: var(--text-dim); display: block; }
-    .spec-val { color: #fff; font-weight: bold; margin-top: 2px; }
-
-    /* 霓虹发光按钮 */
-    .cyber-btn {
-      width: 100%;
-      padding: 14px;
-      background: transparent;
-      border: 1px solid var(--primary-cyan);
-      color: var(--primary-cyan);
-      font-family: var(--font-code);
-      font-size: 14px;
-      font-weight: bold;
-      letter-spacing: 2px;
-      cursor: pointer;
-      position: relative;
-      overflow: hidden;
-      transition: all 0.3s ease;
-      box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
-    }
-
-    .cyber-btn:hover {
-      background: var(--primary-cyan);
-      color: #000;
-      box-shadow: 0 0 25px rgba(0, 243, 255, 0.6);
-    }
-
-    /* ================= 生物特征扫描动画弹窗 ================= */
-    .scan-modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(8, 9, 17, 0.85);
-      backdrop-filter: blur(10px);
-      z-index: 100;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .scan-modal.active { display: flex; }
-
-    .scan-box {
-      width: 320px;
-      padding: 30px;
-      background: var(--card-bg);
-      border: 1px solid var(--primary-cyan);
-      border-radius: 12px;
-      text-align: center;
-      position: relative;
-    }
-
-    .scan-frame {
-      width: 120px;
-      height: 120px;
-      margin: 0 auto 20px;
-      border: 1px solid rgba(0, 243, 255, 0.3);
-      position: relative;
-      overflow: hidden;
-    }
-
-    /* 扫描激光线 */
-    .scan-line {
-      width: 100%;
-      height: 2px;
-      background: var(--primary-cyan);
-      box-shadow: 0 0 10px var(--primary-cyan);
-      position: absolute;
-      top: 0;
-      animation: scan 1.5s infinite alternate ease-in-out;
-    }
-
-    .scan-text {
-      font-family: var(--font-code);
-      font-size: 12px;
-      color: var(--primary-cyan);
-      letter-spacing: 1px;
-    }
-
-    /* Keyframes 动画 */
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
-
-    @keyframes scan {
-      0% { top: 0%; }
-      100% { top: 100%; }
-    }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RESTRICTED TERMINAL // ACCESS CONTROL</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-  <!-- 主终端卡片 -->
-  <div class="cyber-card">
-    <div class="hud-header">
-      <span>NODE // HK-8092</span>
-      <div class="hud-status">
-        <div class="dot"></div>
-        <span>QUANTUM LINKED</span>
-      </div>
-    </div>
+  <!-- 网页背景矩阵与光效 -->
+  <div class="bg-overlay"></div>
 
-    <div class="product-box">
-      <div class="phone-mockup"></div>
-    </div>
+  <!-- 多层验证主容器 -->
+  <main class="auth-container">
+    
+    <!-- 顶部状态栏 -->
+    <header class="auth-header">
+      <span id="layerTag">SECURITY LEVEL // 1/3</span>
+      <span class="status-dot">● GATEWAY ACTIVE</span>
+    </header>
 
-    <h2 class="product-title">CYBER-X PRO 5G</h2>
-    <p class="product-desc">搭载量子加密架构与光子协同芯片，专为下一代数字游民打造的隐蔽级掌上终端。</p>
+    <!-- LAYER 1: 账号与密码 -->
+    <section class="layer-step active" id="layer1">
+      <h2>[ 01 ] 识别协议</h2>
+      <p>请输入管理员代号与访问密钥</p>
+      <div class="field">
+        <label>IDENTITY HANDLE</label>
+        <input type="text" id="username" placeholder="Admin/User Key" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>ACCESS KEY</label>
+        <input type="password" id="password" placeholder="••••••••">
+      </div>
+      <button class="btn" onclick="AuthSystem.verifyLayer1()">继续校验 ➔</button>
+    </section>
 
-    <!-- 规格参数 -->
-    <div class="specs-grid">
-      <div class="spec-item">
-        <span class="spec-label">CORE MATRIX</span>
-        <div class="spec-val">NEURAL-9</div>
+    <!-- LAYER 2: 动态 2FA/OTP 校验 -->
+    <section class="layer-step" id="layer2">
+      <h2>[ 02 ] 动态令牌</h2>
+      <p>请输入身份验证器（TOTP）生成的 6 位动态码</p>
+      <div class="field">
+        <label>TOTP Dynamic Code</label>
+        <input type="text" id="otpCode" maxlength="6" placeholder="000000" autocomplete="off">
       </div>
-      <div class="spec-item">
-        <span class="spec-label">ENCRYPTION</span>
-        <div class="spec-val">AES-Q512</div>
-      </div>
-      <div class="spec-item">
-        <span class="spec-label">STORAGE</span>
-        <div class="spec-val">2TB NVMe</div>
-      </div>
-      <div class="spec-item">
-        <span class="spec-label">CREDITS</span>
-        <div class="spec-val" style="color: var(--primary-cyan);">₮ 8,999</div>
-      </div>
-    </div>
+      <button class="btn" onclick="AuthSystem.verifyLayer2()">校验令牌 ➔</button>
+    </section>
 
-    <!-- 黑科技结算按钮 -->
-    <button class="cyber-btn" onclick="startScan()">INITIATE QUANTUM PAY</button>
-  </div>
-
-  <!-- 生物识别扫描弹窗 -->
-  <div class="scan-modal" id="scanModal">
-    <div class="scan-box">
-      <div class="scan-frame">
-        <div class="scan-line"></div>
+    <!-- LAYER 3: 生物/安全密钥校验 -->
+    <section class="layer-step" id="layer3">
+      <h2>[ 03 ] 生物/信标校验</h2>
+      <p>请点击触发硬件设备或指纹/Face ID 验证</p>
+      <div class="biometric-box" onclick="AuthSystem.verifyLayer3()">
+        <div class="scanner-laser"></div>
+        <span>[ 点击扫描指纹 / 密钥 ]</span>
       </div>
-      <div class="scan-text" id="scanText">校验生物特征与量子密钥...</div>
-    </div>
-  </div>
+      <p id="bioStatus" class="bio-status">等待设备响应...</p>
+    </section>
 
+  </main>
+
+  <!-- 引入逻辑处理脚本 -->
+  <script src="js/auth.js"></script>
   <script>
-    function startScan() {
-      const modal = document.getElementById('scanModal');
-      const scanText = document.getElementById('scanText');
-      
-      modal.classList.add('active');
-      scanText.innerText = "校验生物特征与量子密钥...";
-      scanText.style.color = "var(--primary-cyan)";
-
-      // 模拟激光扫描过程
-      setTimeout(() => {
-        scanText.innerText = "授权通过！正在建立安全通道...";
-      }, 1500);
-
-      // 模拟结算成功
-      setTimeout(() => {
-        modal.classList.remove('active');
-        alert("【传输成功】订单凭证已写入您的区块节点！");
-      }, 3000);
-    }
+    // 初始化检查：如果已经登录过，直接跳过 index 进主页
+    document.addEventListener("DOMContentLoaded", () => {
+      AuthSystem.checkExistingSession();
+    });
   </script>
 </body>
 </html>
