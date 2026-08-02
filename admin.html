@@ -2,73 +2,87 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title>AEGIS // 云端抓拍与 IP 日志后台</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>云端登录人脸抓拍 & IP 审计后台</title>
   <style>
-    body { background: #090d16; color: #fff; font-family: monospace; padding: 20px; }
-    h2 { color: #2563eb; border-bottom: 1px solid #1f2937; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #1f2937; padding: 12px; text-align: left; font-size: 13px; }
-    th { background: #111827; color: #9ca3af; }
-    img.avatar { width: 100px; height: 75px; object-fit: cover; border-radius: 4px; border: 1px solid #374151; transition: 0.2s; cursor: pointer; }
-    img.avatar:hover { transform: scale(2.5); z-index: 10; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.8); }
-    .ip-badge { background: #1e293b; color: #38bdf8; padding: 3px 8px; border-radius: 4px; font-weight: bold; }
-    .btn-refresh { background: #2563eb; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
-    .btn-refresh:hover { background: #1d4ed8; }
+    :root { --bg: #0b0f19; --card-bg: #111827; --accent: #2563eb; --text: #f3f4f6; --text-muted: #9ca3af; --border: #1f2937; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding: 20px; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    h2 { font-size: 20px; color: #38bdf8; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+    th, td { padding: 12px 15px; border-bottom: 1px solid var(--border); }
+    th { background: #1f2937; color: var(--text-muted); font-weight: 600; }
+    tr:hover { background: rgba(255, 255, 255, 0.02); }
+    .thumb { width: 45px; height: 35px; object-fit: cover; border-radius: 4px; cursor: pointer; transition: transform 0.2s; }
+    .thumb:hover { transform: scale(3.5); }
+    .error-msg { color: #f87171; text-align: center; padding: 30px; font-size: 14px; }
   </style>
 </head>
 <body>
-
-  <h2>
-    <span>📸 云端登录人脸抓拍 & IP 审计后台</span>
-    <button class="btn-refresh" onclick="fetchLogs()">🔄 刷新数据</button>
-  </h2>
-
-  <table>
-    <thead>
-      <tr>
-        <th>抓拍照片 (悬停可放大)</th>
-        <th>登录账号 (Email)</th>
-        <th>访客 IP 地址</th>
-        <th>国家/地区</th>
-        <th>抓拍时间</th>
-      </tr>
-    </thead>
-    <tbody id="logTable">
-      <tr><td colspan="5" style="text-align: center;">⏳ 正在拉取云端数据...</td></tr>
-    </tbody>
-  </table>
+  <div class="container">
+    <h2>📸 云端登录人脸抓拍 & IP 审计后台</h2>
+    <div class="card">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 80px;">抓拍照片</th>
+            <th>登录账号 (Email)</th>
+            <th>访问 IP 地址</th>
+            <th>国家/地区</th>
+            <th>抓拍时间</th>
+          </tr>
+        </thead>
+        <tbody id="logTableBody">
+          <tr><td colspan="5" style="text-align:center; color: var(--text-muted); padding: 30px;">⏳ 正在加载审计数据...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 
   <script>
-    // 🔗 请修改为你的 Worker 线上地址
+    // 🔗 请修改为你的 Worker 线上地址 (必须以 https:// 开头，末尾不要加斜杠)
     const WORKER_URL = "https://face-logger.bmk4byvf9b.workers.dev";
 
-    async function fetchLogs() {
-      const tbody = document.getElementById('logTable');
+    async function loadLogs() {
+      const tbody = document.getElementById('logTableBody');
       try {
-        const res = await fetch(WORKER_URL);
-        const data = await res.json();
+        // 请求加上 ?type=logs 参数，确保后端返回纯数组
+        const res = await fetch(WORKER_URL + "?type=logs");
+        if (!res.ok) throw new Error("网络响应异常");
+        
+        const logs = await res.json();
+        
+        if (!Array.isArray(logs)) {
+          throw new Error("返回数据格式不正确");
+        }
 
-        if (!data || data.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">📭 暂无日志（请用手机或电脑在前端完成一次登录验证）</td></tr>';
+        if (logs.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: var(--text-muted); padding: 30px;">暂无抓拍记录</td></tr>`;
           return;
         }
 
-        tbody.innerHTML = data.map(log => `
-          <tr>
-            <td><img src="${log.photo || ''}" class="avatar" alt="抓拍人脸"></td>
-            <td>${log.email || '未知用户'}</td>
-            <td><span class="ip-badge">${log.ip || '未知 IP'}</span></td>
-            <td>${log.country || '未知'}</td>
-            <td>${log.timestamp || '未知时间'}</td>
-          </tr>
-        `).join('');
-
-      } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="5" style="color: #ef4444; text-align: center;">❌ 数据拉取失败: ${e.message}</td></tr>`;
+        let html = '';
+        logs.forEach(log => {
+          const photoHtml = log.photo ? `<img src="${log.photo}" class="thumb" title="悬停放大">` : `<span style="color:var(--text-muted)">无照片</span>`;
+          html += `
+            <tr>
+              <td>${photoHtml}</td>
+              <td>${log.email || '未知用户'}</td>
+              <td>${log.ip || '未知 IP'}</td>
+              <td>${log.country || '未知'}</td>
+              <td>${log.timestamp || '未知时间'}</td>
+            </tr>`;
+        });
+        tbody.innerHTML = html;
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="5" class="error-msg">❌ 数据拉取失败: ${err.message}</td></tr>`;
       }
     }
 
-    fetchLogs();
+    // 页面加载时自动拉取
+    loadLogs();
   </script>
 </body>
 </html>
