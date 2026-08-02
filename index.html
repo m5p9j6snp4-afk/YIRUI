@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>黑市二手寄卖 & 极客拍卖大厅</title>
+  <title>二手寄卖 & 拍卖大厅</title>
   <!-- 引入轻量级人脸识别 AI 库 -->
   <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
   <style>
@@ -40,7 +40,7 @@
 
   <div class="modal-overlay" id="authModal">
     <div class="auth-card">
-      <h3>🔐 AI 活体人脸安全验证</h3>
+      <h3>🔐 AI人脸安全验证</h3>
       <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">请将脸部正对镜头（检测到人脸后按钮才可点击）</p>
       <div class="camera-box"><video id="webcam" autoplay playsinline muted></video></div>
       <div style="font-size: 11px; color: #38bdf8; margin-bottom: 10px;" id="camStatus">⏳ 正在加载 AI 人脸模型...</div>
@@ -62,8 +62,8 @@
   </header>
 
   <div class="container">
-    <div id="tab-market" class="tab-content active"><h3>📱 玩家二手寄卖大厅</h3><div class="grid" id="marketList"></div></div>
-    <div id="tab-auction" class="tab-content"><h3>🔥 极客限量款竞拍大厅</h3><div class="grid" id="auctionList"></div></div>
+    <div id="tab-market" class="tab-content active"><h3>📱 二手寄卖大厅</h3><div class="grid" id="marketList"></div></div>
+    <div id="tab-auction" class="tab-content"><h3>🔥 竞拍大厅</h3><div class="grid" id="auctionList"></div></div>
     <div id="tab-sell" class="tab-content">
       <div class="auth-card" style="max-width: 500px; margin: 0 auto; text-align: left;">
         <h3 style="margin-bottom: 15px;">📦 发布二手寄卖物品</h3>
@@ -77,7 +77,7 @@
     </div>
     <div id="tab-postAuction" class="tab-content">
       <div class="auth-card" style="max-width: 500px; margin: 0 auto; text-align: left;">
-        <h3 style="margin-bottom: 15px;">🔨 发起新的极客拍卖</h3>
+        <h3 style="margin-bottom: 15px;">🔨 发起新的拍卖</h3>
         <div class="input-group"><label>拍品名称</label><input type="text" id="aucName" placeholder="例如：Sony 耳机"></div>
         <div class="input-group"><label>起拍价 (元)</label><input type="number" id="aucStartPrice" placeholder="1000"></div>
         <div class="input-group"><label>拍品描述</label><textarea id="aucDesc" rows="3"></textarea></div>
