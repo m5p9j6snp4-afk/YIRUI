@@ -11,14 +11,13 @@
     header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 24px; }
     h1 { font-size: 18px; font-family: monospace; color: var(--accent); }
     .btn-group { display: flex; gap: 10px; }
-    button { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-family: monospace; }
+    button { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-family: monospace; font-weight: bold; }
     .btn-refresh { background: var(--accent); color: white; }
-    .btn-clear { background: #ef4444; color: white; }
     
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
-    .log-card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-    .photo-box { width: 100%; height: 220px; background: #000; display: flex; justify-content: center; align-items: center; }
-    .photo-box img { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+    .log-card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    .photo-box { width: 100%; height: 220px; background: #000; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+    .photo-box img { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); filter: contrast(1.02); }
     .info-box { padding: 14px; font-size: 12px; font-family: monospace; }
     .info-email { font-weight: bold; color: #fff; margin-bottom: 4px; }
     .info-time { color: #9ca3af; }
@@ -28,60 +27,45 @@
 <body>
 
   <header>
-    <h1>[AEGIS ADMIN] 登录人脸抓拍日志</h1>
+    <h1>[AEGIS ADMIN] 云端登录人脸抓拍日志</h1>
     <div class="btn-group">
-      <button class="btn-refresh" onclick="loadLogs()">刷新</button>
-      <button class="btn-clear" onclick="clearLogs()">清空记录</button>
+      <button class="btn-refresh" onclick="loadLogs()">刷新云端数据</button>
     </div>
   </header>
 
   <div class="grid" id="logsContainer"></div>
 
   <script>
-    function loadLogs() {
+    const WORKER_URL = "https://face-logger.bmk4byvf9b.workers.dev";
+
+    async function loadLogs() {
       const container = document.getElementById('logsContainer');
-      let logs = [];
 
-      // 1. 尝试从 localStorage 读取
       try {
-        logs = JSON.parse(localStorage.getItem("ADMIN_FACE_LOGS") || "[]");
-      } catch(e) {}
+        container.innerHTML = `<div class="empty-tip">⏳ 正在从 Cloudflare 实时读取全域抓拍记录...</div>`;
+        
+        const res = await fetch(WORKER_URL);
+        const logs = await res.json();
 
-      // 2. 如果 localStorage 没有，读取刚刚跳转带过来的 Session 照片
-      const lastPhoto = sessionStorage.getItem("LAST_CAPTURED_PHOTO");
-      const lastEmail = sessionStorage.getItem("LAST_CAPTURED_EMAIL");
-      const lastTime = sessionStorage.getItem("LAST_CAPTURED_TIME");
+        if (!logs || logs.length === 0) {
+          container.innerHTML = `<div class="empty-tip">⚠️ 暂无人脸抓拍记录。</div>`;
+          return;
+        }
 
-      if (lastPhoto && !logs.some(l => l.photo === lastPhoto)) {
-        logs.unshift({
-          email: lastEmail || "alex.chen@aegis-tech.internal",
-          timestamp: lastTime || new Date().toLocaleTimeString(),
-          photo: lastPhoto
-        });
-      }
-
-      if (logs.length === 0) {
-        container.innerHTML = `<div class="empty-tip">⚠️ 暂无人脸抓拍记录。<br><br><small style="color:#4b5563">请先在 index.html 完成扫脸登录。</small></div>`;
-        return;
-      }
-
-      container.innerHTML = logs.map(item => `
-        <div class="log-card">
-          <div class="photo-box">
-            <img src="${item.photo}" alt="Captured Face" />
+        container.innerHTML = logs.map(item => `
+          <div class="log-card">
+            <div class="photo-box">
+              <img src="${item.photo}" alt="Captured Face" />
+            </div>
+            <div class="info-box">
+              <div class="info-email">USER: ${item.email}</div>
+              <div class="info-time">TIME: ${item.timestamp}</div>
+            </div>
           </div>
-          <div class="info-box">
-            <div class="info-email">USER: ${item.email}</div>
-            <div class="info-time">TIME: ${item.timestamp}</div>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    function clearLogs() {
-      localStorage.removeItem("ADMIN_FACE_LOGS");
-      sessionStorage.removeItem("LAST_CAPTURED_PHOTO");
-      loadLogs();
+        `).join('');
+      } catch (e) {
+        container.innerHTML = `<div class="empty-tip" style="color:#ef4444">❌ 云端数据拉取失败，请检查 Worker 是否正常运行。</div>`;
+      }
     }
 
     loadLogs();
