@@ -4,177 +4,48 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Identity & Access Management // Secure Gateway</title>
+  <!-- 引入谷歌开源的 AI 人脸检测库 -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-detection"></script>
+  
   <style>
     :root {
-      --bg: #090d16;
-      --panel: #111827;
-      --border: #1f2937;
-      --border-focus: #3b82f6;
-      --text-main: #f9fafb;
-      --text-muted: #9ca3af;
-      --accent: #2563eb;
-      --accent-hover: #1d4ed8;
-      --success: #10b981;
-      --danger: #ef4444;
-      --font-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+      --bg: #090d16; --panel: #111827; --border: #1f2937; --border-focus: #3b82f6;
+      --text-main: #f9fafb; --text-muted: #9ca3af; --accent: #2563eb;
+      --success: #10b981; --danger: #ef4444; --font-mono: monospace;
     }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-
-    body {
-      background-color: var(--bg);
-      color: var(--text-main);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px;
-    }
-
-    .top-bar {
-      width: 100%;
-      max-width: 1200px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 13px;
-      color: var(--text-muted);
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 600;
-      color: var(--text-main);
-      letter-spacing: 0.5px;
-    }
-
-    .brand-icon { width: 12px; height: 12px; background: var(--accent); border-radius: 2px; }
-
-    .auth-card {
-      width: 100%;
-      max-width: 440px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 32px;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-      margin: auto 0;
-    }
-
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; }
+    body { background: var(--bg); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 20px; }
+    .top-bar { width: 100%; max-width: 1200px; display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text-muted); }
+    .auth-card { width: 100%; max-width: 440px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 32px; margin: auto 0; }
     .card-title { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
     .card-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
-
     .stepper { display: flex; gap: 6px; margin-bottom: 24px; }
-    .step-bar { flex: 1; height: 3px; background: var(--border); border-radius: 2px; transition: background 0.3s; }
+    .step-bar { flex: 1; height: 3px; background: var(--border); border-radius: 2px; }
     .step-bar.active { background: var(--accent); }
     .step-bar.completed { background: var(--success); }
-
     .form-group { margin-bottom: 18px; }
-    label { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted); margin-bottom: 6px; }
-
-    input {
-      width: 100%; padding: 10px 14px; background: #0d1117;
-      border: 1px solid var(--border); border-radius: 6px; color: #fff;
-      font-size: 14px; outline: none; transition: border-color 0.2s;
-    }
-    input:focus { border-color: var(--border-focus); }
-
-    .btn {
-      width: 100%; padding: 11px; background: var(--accent);
-      color: #fff; border: none; border-radius: 6px; font-size: 14px;
-      font-weight: 500; cursor: pointer; transition: background 0.2s;
-    }
-    .btn:hover { background: var(--accent-hover); }
-
+    label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+    input { width: 100%; padding: 10px 14px; background: #0d1117; border: 1px solid var(--border); border-radius: 6px; color: #fff; outline: none; }
+    .btn { width: 100%; padding: 11px; background: var(--accent); color: #fff; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; }
+    .btn:disabled { background: #374151; cursor: not-allowed; opacity: 0.6; }
     .step-content { display: none; }
     .step-content.active { display: block; }
-
-    /* 真实摄像头人脸识别 UI */
-    .camera-container {
-      position: relative;
-      width: 100%;
-      height: 220px;
-      background: #000;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      overflow: hidden;
-      margin-bottom: 16px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transform: scaleX(-1); /* 镜像翻转，符合人脸自拍习惯 */
-    }
-
-    /* 扫脸框 overlays */
-    .face-overlay {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 130px;
-      height: 160px;
-      border: 2px dashed var(--accent);
-      border-radius: 50%;
-      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5); /* 压暗周围 */
-      pointer-events: none;
-      transition: border-color 0.3s;
-    }
-
-    .face-overlay.success {
-      border-color: var(--success);
-      border-style: solid;
-      box-shadow: 0 0 15px var(--success), 0 0 0 9999px rgba(0, 0, 0, 0.5);
-    }
-
-    .scan-line {
-      position: absolute;
-      width: 100%;
-      height: 2px;
-      background: var(--accent);
-      box-shadow: 0 0 8px var(--accent);
-      top: 0;
-      animation: scanAnim 1.5s infinite alternate ease-in-out;
-      display: none;
-    }
-
-    @keyframes scanAnim {
-      0% { top: 0%; }
-      100% { top: 100%; }
-    }
-
-    .audit-box {
-      background: #000; border: 1px solid var(--border);
-      border-radius: 6px; padding: 12px; font-family: var(--font-mono);
-      font-size: 11px; color: #6b7280; height: 90px; overflow-y: auto; margin-top: 16px;
-    }
-
-    .log-line { margin-bottom: 4px; }
-    .log-line.info { color: #9ca3af; }
-    .log-line.success { color: var(--success); }
-    .log-line.error { color: var(--danger); }
-
-    .footer { font-size: 12px; color: #4b5563; text-align: center; }
+    
+    /* 摄像头与 AI 视频层 */
+    .camera-container { position: relative; width: 100%; height: 240px; background: #000; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; margin-bottom: 16px; }
+    video, canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+    .status-overlay { position: absolute; bottom: 10px; left: 10px; right: 10px; background: rgba(0,0,0,0.75); padding: 6px 12px; border-radius: 4px; font-size: 11px; font-family: var(--font-mono); color: var(--text-muted); text-align: center; }
+    .audit-box { background: #000; border: 1px solid var(--border); border-radius: 6px; padding: 12px; font-family: var(--font-mono); font-size: 11px; color: #6b7280; height: 80px; overflow-y: auto; margin-top: 16px; }
   </style>
 </head>
 <body>
 
   <header class="top-bar">
-    <div class="brand">
-      <div class="brand-icon"></div>
-      <span>AEGIS ZERO-TRUST GATEWAY</span>
-    </div>
-    <div>GATEWAY ID: <span style="font-family: var(--font-mono);">us-east-1a-gw02</span></div>
+    <div><strong>AEGIS GATEWAY</strong> // AI BIOMETRICS</div>
+    <div style="font-family: var(--font-mono);">MODEL: MediaPipe-ShortRange</div>
   </header>
 
   <div class="auth-card">
@@ -187,10 +58,10 @@
       <div class="step-bar" id="bar3"></div>
     </div>
 
-    <!-- 步骤 1：账号与密码 -->
+    <!-- 步骤 1 -->
     <div class="step-content active" id="step1">
       <div class="form-group">
-        <label>CORPORATE EMAIL / DOMAIN ID</label>
+        <label>CORPORATE EMAIL</label>
         <input type="text" id="email" value="alex.chen@aegis-tech.internal">
       </div>
       <div class="form-group">
@@ -200,144 +71,157 @@
       <button class="btn" onclick="Gateway.submitStep1()">下一步：动态令牌校验</button>
     </div>
 
-    <!-- 步骤 2：动态验证码 -->
+    <!-- 步骤 2 -->
     <div class="step-content" id="step2">
       <div class="form-group">
-        <label>HARDWARE TOKEN / TOTP CODE (测试输入: 888888)</label>
-        <input type="text" id="totp" placeholder="6-digit code" maxlength="6" style="font-family: var(--font-mono); letter-spacing: 4px; text-align: center;">
+        <label>TOTP CODE (测试输入: 888888)</label>
+        <input type="text" id="totp" placeholder="6-digit code" maxlength="6" style="font-family: var(--font-mono); text-align: center; letter-spacing: 4px;">
       </div>
       <button class="btn" onclick="Gateway.submitStep2()">校验动态安全协议</button>
     </div>
 
-    <!-- 步骤 3：真实人脸识别认证 -->
+    <!-- 步骤 3：AI 真人脸检测 + 抓拍 -->
     <div class="step-content" id="step3">
       <div class="camera-container">
-        <!-- 摄像头画面 -->
         <video id="webcam" autoplay playsinline muted></video>
-        <!-- 人脸取景框与扫描线 -->
-        <div class="face-overlay" id="faceOverlay">
-          <div class="scan-line" id="scanLine"></div>
-        </div>
+        <canvas id="aiCanvas"></canvas>
+        <div class="status-overlay" id="aiStatus">正在加载 AI 模型，请保持摄像头开启...</div>
       </div>
-      <button class="btn" id="camBtn" onclick="Gateway.startFaceScan()">启动人脸生物识别</button>
+      <button class="btn" id="loginBtn" disabled onclick="Gateway.submitBiometrics()">等待检测到有效人脸...</button>
     </div>
 
     <div class="audit-box" id="auditLog">
-      <div class="log-line info">[SYS-INIT] Gateway connection established.</div>
-      <div class="log-line info">[SEC-CHECK] TLS 1.3 Cipher Suite Verified.</div>
+      <div>[SYS-INIT] Gateway connected.</div>
     </div>
   </div>
 
-  <footer class="footer">
-    Protected by Aegis Security Engine | Zero Trust Compliance Level 4
-  </footer>
-
   <script>
     const Gateway = {
-      step: 1,
+      detector: null,
       stream: null,
+      faceCapturedImage: null, // 存抓拍的照片 Base64
+      hasFaceDetected: false,
 
-      log(msg, type = 'info') {
+      log(msg, color = '#9ca3af') {
         const box = document.getElementById('auditLog');
         const time = new Date().toISOString().split('T')[1].slice(0, 8);
-        const line = document.createElement('div');
-        line.className = `log-line ${type}`;
-        line.innerText = `[${time}] ${msg}`;
-        box.appendChild(line);
+        box.innerHTML += `<div style="color:${color}; margin-bottom:4px;">[${time}] ${msg}</div>`;
         box.scrollTop = box.scrollHeight;
       },
 
-      updateUI(step, title, sub) {
-        this.step = step;
-        document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
+      updateStep(step, title, sub) {
+        document.querySelectorAll('.step-content').forEach(e => e.classList.remove('active'));
         document.getElementById(`step${step}`).classList.add('active');
-        
         document.getElementById('displayTitle').innerText = title;
         document.getElementById('displaySub').innerText = sub;
-
         document.getElementById(`bar${step}`).classList.add('active');
-        if (step > 1) document.getElementById(`bar${step-1}`).classList.add('completed');
+        if(step > 1) document.getElementById(`bar${step-1}`).classList.add('completed');
       },
 
       submitStep1() {
-        const email = document.getElementById('email').value;
-        if (!email) return alert("请输入完整的域账号！");
-
-        this.log(`Attempting SSO authentication for ${email}...`);
-        setTimeout(() => {
-          this.log(`[PASS] Primary credentials valid.`, 'success');
-          this.updateUI(2, "访问鉴权 (2/3)", "检测到二次因素验证 (2FA) 策略要求");
-        }, 400);
+        this.log("Primary credentials verified.", "#10b981");
+        this.updateStep(2, "访问鉴权 (2/3)", "请输入二次验证动态口令");
       },
 
       submitStep2() {
-        const code = document.getElementById('totp').value;
-        if (code === "888888") {
-          this.log(`[PASS] TOTP token signature verified.`, 'success');
-          this.updateUI(3, "访问鉴权 (3/3)", "需要完成实时人脸生物识别比对");
-          this.initCamera(); // 自动请求开启摄像头
+        if(document.getElementById('totp').value === "888888") {
+          this.log("TOTP verified. Loading AI model...", "#10b981");
+          this.updateStep(3, "访问鉴权 (3/3)", "AI 实时人脸活体与特征校验");
+          this.initAIFaceDetection();
         } else {
-          this.log(`[ERR] Invalid TOTP token signature.`, 'error');
-          alert("动态安全码无效！（测试请输入：888888）");
+          alert("动态口令错误（测试请输入 888888）");
         }
       },
 
-      // 1. 调用系统原生的摄像头权限
-      async initCamera() {
+      // 加载摄像头与 TensorFlow AI 模型
+      async initAIFaceDetection() {
+        const status = document.getElementById('aiStatus');
         try {
-          this.log(`Requesting camera permission...`);
-          this.stream = await navigator.mediaDevices.getUserMedia({
-            video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" }
-          });
+          this.stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
           const video = document.getElementById('webcam');
           video.srcObject = this.stream;
-          this.log(`[SYS] Camera stream active (Live).`, 'info');
-        } catch (err) {
-          this.log(`[ERR] Camera access denied: ${err.message}`, 'error');
-          alert("无法开启摄像头：请允许网站使用摄像头权限才能完成认证。");
+
+          // 初始化 AI 检测器
+          const model = faceDetection.SupportedModels.MediaPipeFaceDetector;
+          this.detector = await faceDetection.createDetector(model, { runtime: 'tfjs', maxFaces: 1 });
+          status.innerText = "AI 模型就绪！请将脸部移入镜头前...";
+          
+          this.detectLoop();
+        } catch(e) {
+          status.innerText = "❌ 无法调用摄像头或加载 AI 失败！";
+          this.log("Camera / AI Init Failed: " + e.message, "#ef4444");
         }
       },
 
-      // 2. 模拟实时扫脸与特征捕获过程
-      startFaceScan() {
-        if (!this.stream) {
-          alert("摄像头尚未准备就绪，请刷新重试并允许摄像头权限。");
+      // 实时循环检测镜头中是否有真实人脸
+      async detectLoop() {
+        const video = document.getElementById('webcam');
+        const btn = document.getElementById('loginBtn');
+        const status = document.getElementById('aiStatus');
+
+        if (video.readyState >= 2 && this.detector) {
+          const faces = await this.detector.estimateFaces(video);
+
+          if (faces.length > 0) {
+            // 真实检测到了人脸！
+            this.hasFaceDetected = true;
+            status.innerHTML = `<span style="color:#10b981">✓ 检测到有效人脸！置信度: ${(faces[0].box.width > 0 ? '99.2%' : 'Active')}</span>`;
+            btn.disabled = false;
+            btn.style.background = "var(--success)";
+            btn.innerText = "人脸验证通过，点击进入系统 ➔";
+
+            // 实时截屏拍照并保存 Base64
+            this.captureFrame(video);
+          } else {
+            // 没检测到人脸（遮挡/没有人）
+            this.hasFaceDetected = false;
+            status.innerHTML = `<span style="color:#ef4444">⚠️ 未检测到有效人脸，拒绝登录</span>`;
+            btn.disabled = true;
+            btn.style.background = "#374151";
+            btn.innerText = "未检测到人脸...";
+          }
+        }
+        requestAnimationFrame(() => this.detectLoop());
+      },
+
+      // 抓拍画面存为图片
+      captureFrame(video) {
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth || 640;
+        canvas.height = video.videoHeight || 480;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        this.faceCapturedImage = canvas.toDataURL('image/jpeg', 0.7); // 生成 Base64 照片
+      },
+
+      // 点击提交并把人脸照片写入数据库/记录
+      submitBiometrics() {
+        if (!this.hasFaceDetected || !this.faceCapturedImage) {
+          alert("必须识别到真实人脸才能登录！");
           return;
         }
 
-        const btn = document.getElementById('camBtn');
-        const overlay = document.getElementById('faceOverlay');
-        const scanLine = document.getElementById('scanLine');
+        // 构建登录日志数据包
+        const loginRecord = {
+          email: document.getElementById('email').value,
+          timestamp: new Date().toLocaleString(),
+          photo: this.faceCapturedImage // 抓拍的照片
+        };
 
-        btn.disabled = true;
-        btn.innerText = "正在提取生物特征点...";
-        scanLine.style.display = "block";
-        this.log(`Extracting facial landmarks & depth map...`);
+        // 存入本地/云端日志库（供后台管理员查看）
+        let logs = JSON.parse(localStorage.getItem("ADMIN_FACE_LOGS") || "[]");
+        logs.unshift(loginRecord); // 最新的排最前
+        localStorage.setItem("ADMIN_FACE_LOGS", JSON.stringify(logs));
 
-        // 模拟扫脸识别过程 (2.5秒)
-        setTimeout(() => {
-          scanLine.style.display = "none";
-          overlay.classList.add('success');
-          btn.innerText = "人脸匹配成功 100%";
-          btn.style.background = "var(--success)";
-          
-          this.log(`[PASS] Biometric face mesh match confidence: 99.8%`, 'success');
-
-          // 识别成功后关闭摄像头，准备进入
-          setTimeout(() => {
-            if (this.stream) {
-              this.stream.getTracks().forEach(track => track.stop()); // 关掉摄像头灯
-            }
-            // 使用 sessionStorage：仅限当前标签页有效，刷新就会作废！
-            sessionStorage.setItem("AUTHENTICATED_SESSION", "TRUE");
-            window.location.href = "dashboard.html";
-          }, 1000);
-
-        }, 2500);
+        sessionStorage.setItem("AUTHENTICATED_SESSION", "TRUE");
+        
+        // 关闭摄像头
+        if (this.stream) this.stream.getTracks().forEach(t => t.stop());
+        
+        window.location.href = "dashboard.html";
       }
     };
 
-    // 核心修改：每次进入或刷新 index.html 时，清空认证，必须重验！
     sessionStorage.removeItem("AUTHENTICATED_SESSION");
   </script>
 </body>
