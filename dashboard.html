@@ -5,23 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CORE DASHBOARD // 核心系统</title>
   <script>
-    // 门卫拦截：未经过多层验证强行访问，直接踢回 index.html
-    if (localStorage.getItem("SECURE_AUTH_TOKEN") !== "GRANTED_LEVEL_ROOT") {
-      alert("⚠️ 拒绝访问！请先完成多层身份校验！");
+    // 使用 sessionStorage 校验：只要刷新 index 或者直接强闯，就会被重定向弹回门禁！
+    if (sessionStorage.getItem("AUTHENTICATED_SESSION") !== "TRUE") {
+      alert("⚠️ 访问已失效或未经授权！请重新完成人脸与多层验证！");
       window.location.href = "index.html";
     }
   </script>
   <style>
     body {
-      background: #05070f; color: #00ff66; font-family: monospace;
+      background: #090d16; color: #10b981; font-family: monospace;
       padding: 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh;
     }
     .box {
-      border: 1px solid #00ff66; padding: 30px; border-radius: 8px;
-      box-shadow: 0 0 20px rgba(0,255,102,0.2); text-align: center; max-width: 500px;
+      border: 1px solid #10b981; padding: 30px; border-radius: 8px;
+      box-shadow: 0 0 20px rgba(16,185,129,0.1); text-align: center; max-width: 500px; background: #111827;
     }
     .btn-logout {
-      margin-top: 20px; padding: 10px 20px; background: #ff0055;
+      margin-top: 20px; padding: 10px 20px; background: #ef4444;
       color: white; border: none; font-family: monospace; cursor: pointer; border-radius: 4px;
     }
   </style>
@@ -29,14 +29,14 @@
 <body>
 
   <div class="box">
-    <h1>[ ACCESS GRANTED ]</h1>
-    <p style="margin-top: 15px; color: #e2e8f0;">欢迎来到赛博核心控制台！你已通过三层节点验证。</p>
-    <button class="btn-logout" onclick="logout()">锁定并退出系统</button>
+    <h1>[ AUTHENTICATED ACCESS ]</h1>
+    <p style="margin-top: 15px; color: #9ca3af;">人脸生物特征比对通过，会话已激活。</p>
+    <button class="btn-logout" onclick="logout()">锁定系统并退出</button>
   </div>
 
   <script>
     function logout() {
-      localStorage.removeItem("SECURE_AUTH_TOKEN");
+      sessionStorage.clear();
       window.location.href = "index.html";
     }
   </script>
