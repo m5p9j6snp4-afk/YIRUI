@@ -2,38 +2,45 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title>AEGIS // 云端日志管理后台</title>
+  <title>AEGIS // 云端抓拍与 IP 日志后台</title>
   <style>
     body { background: #090d16; color: #fff; font-family: monospace; padding: 20px; }
+    h2 { color: #2563eb; border-bottom: 1px solid #1f2937; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
     table { width: 100%; border-collapse: collapse; margin-top: 20px; }
     th, td { border: 1px solid #1f2937; padding: 12px; text-align: left; font-size: 13px; }
     th { background: #111827; color: #9ca3af; }
-    img { width: 80px; height: 60px; object-fit: cover; border-radius: 4px; }
-    .ip-tag { background: #1e293b; color: #38bdf8; padding: 3px 8px; border-radius: 4px; font-weight: bold; }
+    /* 📸 照片样式：支持悬停放大查看 */
+    img.avatar { width: 100px; height: 75px; object-fit: cover; border-radius: 4px; border: 1px solid #374151; transition: 0.2s; cursor: pointer; }
+    img.avatar:hover { transform: scale(2.5); z-index: 10; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.8); }
+    .ip-badge { background: #1e293b; color: #38bdf8; padding: 3px 8px; border-radius: 4px; font-weight: bold; }
+    .btn-refresh { background: #2563eb; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+    .btn-refresh:hover { background: #1d4ed8; }
   </style>
 </head>
 <body>
 
-  <h2>📸 抓拍日志 & 访客 IP 管理后台</h2>
-  <button onclick="fetchLogs()" style="background:#2563eb; color:#fff; border:none; padding:8px 16px; border-radius:4px; cursor:pointer;">🔄 刷新数据</button>
+  <h2>
+    <span>📸 云端登录人脸抓拍 & IP 审计后台</span>
+    <button class="btn-refresh" onclick="fetchLogs()">🔄 刷新数据</button>
+  </h2>
 
   <table>
     <thead>
       <tr>
-        <th>抓拍照片</th>
-        <th>登录账号</th>
+        <th>抓拍照片 (悬停可放大)</th>
+        <th>登录账号 (Email)</th>
         <th>访客 IP 地址</th>
         <th>国家/地区</th>
         <th>抓拍时间</th>
       </tr>
     </thead>
     <tbody id="logTable">
-      <tr><td colspan="5" style="text-align: center;">⏳ 正在加载...</td></tr>
+      <tr><td colspan="5" style="text-align: center;">⏳ 正在拉取云端数据...</td></tr>
     </tbody>
   </table>
 
   <script>
-    // ⚠️ 替换成你自己的 Worker URL
+    // 🔗 请确保这里填的是你的 Worker URL
     const WORKER_URL = "https://face-logger.bmk4byvf9b.workers.dev";
 
     async function fetchLogs() {
@@ -43,24 +50,26 @@
         const data = await res.json();
 
         if (!data || data.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">📭 暂无数据（请先在前端登录一次）</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">📭 暂无数据（请先在前端进行一次人脸验证登录）</td></tr>';
           return;
         }
 
         tbody.innerHTML = data.map(log => `
           <tr>
-            <td><img src="${log.photo || ''}"></td>
-            <td>${log.email || '未知'}</td>
-            <td><span class="ip-tag">${log.ip || '未知 IP'}</span></td>
+            <td><img src="${log.photo || ''}" class="avatar" alt="抓拍人脸" title="点击或悬停放大"></td>
+            <td>${log.email || '未知用户'}</td>
+            <td><span class="ip-badge">${log.ip || '未知 IP'}</span></td>
             <td>${log.country || '未知'}</td>
-            <td>${log.timestamp || '未知'}</td>
+            <td>${log.timestamp || '未知时间'}</td>
           </tr>
         `).join('');
+
       } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="5" style="color:red; text-align:center;">❌ 读取失败: ${e.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" style="color: #ef4444; text-align: center;">❌ 数据拉取失败: ${e.message}</td></tr>`;
       }
     }
 
+    // 页面加载自动获取
     fetchLogs();
   </script>
 </body>
