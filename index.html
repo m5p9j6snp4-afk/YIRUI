@@ -85,8 +85,8 @@
   </div>
 
   <script>
-    // 🔗 线上 Worker 地址（末尾不要加斜杠）
-    const WORKER_URL = "https://face-logger.bmk4byvf9b.workers.dev";
+    // 🔗 已经切换为国内可流畅访问的自定义域名
+    const WORKER_URL = "https://api.yirui.uk";
 
     class App {
       constructor() {
@@ -131,7 +131,6 @@
           }
         } catch (e) {}
 
-        // 异步发送抓拍数据，不阻塞进入
         fetch(WORKER_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -159,7 +158,6 @@
           const data = await res.json();
           const bids = data.bids || {};
 
-          // 1. 渲染寄卖商品
           let marketHtml = '';
           if (data.market && data.market.length > 0) {
             data.market.forEach(item => {
@@ -181,7 +179,6 @@
           }
           marketListEl.innerHTML = marketHtml;
 
-          // 2. 渲染拍卖大厅
           let defaultAuctions = [
             { id: 'item1', name: 'Apple Watch Ultra 2', price: 2000, desc: '起拍价 ¥2,000', imgSrc: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=400&q=80' },
             { id: 'item2', name: 'Sennheiser HD800S', price: 6000, desc: '起拍价 ¥6,000', imgSrc: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=400&q=80' }
