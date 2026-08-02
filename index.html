@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Identity & Access Management // Secure Gateway</title>
+  <title>AEGIS // Smart Enterprise Portal</title>
   <style>
     :root {
       --bg: #090d16; --panel: #111827; --border: #1f2937;
@@ -12,18 +12,26 @@
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; }
     body { background: var(--bg); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 20px; }
-    .top-bar { width: 100%; max-width: 1200px; display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text-muted); }
     
-    .auth-card { width: 100%; max-width: 440px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 32px; margin: auto 0; }
+    .top-bar { width: 100%; max-width: 1000px; display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text-muted); }
+    
+    /* 🧭 导航栏 (登录后解锁) */
+    .nav-tabs { display: none; gap: 10px; margin-bottom: 20px; width: 100%; max-width: 1000px; }
+    .nav-tab { flex: 1; padding: 10px; background: var(--panel); border: 1px solid var(--border); color: var(--text-muted); text-align: center; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; }
+    .nav-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    .auth-card { width: 100%; max-width: 500px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 28px; margin: auto 0; transition: all 0.3s; }
     .card-title { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
-    .card-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
-    .stepper { display: flex; gap: 6px; margin-bottom: 24px; }
+    .card-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+    
+    .stepper { display: flex; gap: 6px; margin-bottom: 20px; }
     .step-bar { flex: 1; height: 3px; background: var(--border); border-radius: 2px; }
     .step-bar.active { background: var(--accent); }
     .step-bar.completed { background: var(--success); }
-    .form-group { margin-bottom: 18px; }
+    
+    .form-group { margin-bottom: 16px; text-align: left; }
     label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
-    input { width: 100%; padding: 10px 14px; background: #0d1117; border: 1px solid var(--border); border-radius: 6px; color: #fff; outline: none; }
+    input, textarea { width: 100%; padding: 10px 14px; background: #0d1117; border: 1px solid var(--border); border-radius: 6px; color: #fff; outline: none; }
     
     .btn { width: 100%; padding: 11px; background: #374151; color: #9ca3af; border: none; border-radius: 6px; font-size: 14px; cursor: not-allowed; transition: all 0.3s; font-weight: 600; }
     .btn.active { background: var(--success); color: #fff; cursor: pointer; }
@@ -44,31 +52,41 @@
       border-color: var(--success); border-style: solid;
       box-shadow: 0 0 20px var(--success), 0 0 0 9999px rgba(0,0,0,0.65);
     }
-
     .status-overlay { position: absolute; bottom: 10px; left: 10px; right: 10px; background: rgba(0,0,0,0.85); padding: 6px 12px; border-radius: 4px; font-size: 11px; font-family: var(--font-mono); color: var(--danger); text-align: center; }
-    .audit-box { background: #000; border: 1px solid var(--border); border-radius: 6px; padding: 12px; font-family: var(--font-mono); font-size: 11px; color: #6b7280; height: 80px; overflow-y: auto; margin-top: 16px; }
 
-    /* 💬 聊天界面样式 */
+    /* 🤖 1. AI 聊天界面 */
     .chat-container { display: flex; flex-direction: column; height: 380px; }
-    .chat-messages { flex: 1; overflow-y: auto; padding: 10px; background: #0d1117; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px; }
-    .msg { max-width: 80%; padding: 8px 12px; border-radius: 8px; font-size: 13px; line-height: 1.4; }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 12px; background: #0d1117; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px; }
+    .msg { max-width: 85%; padding: 10px 14px; border-radius: 8px; font-size: 13px; line-height: 1.5; }
     .msg.bot { background: #1f2937; color: #fff; align-self: flex-start; }
     .msg.user { background: var(--accent); color: #fff; align-self: flex-end; }
     .chat-input-box { display: flex; gap: 8px; }
-    .chat-input-box input { flex: 1; }
-    .chat-input-box button { width: auto; padding: 0 16px; background: var(--accent); }
+
+    /* 🔨 2. 拍卖页面 */
+    .auction-item { background: #0d1117; border: 1px solid var(--border); border-radius: 6px; padding: 12px; margin-bottom: 12px; text-align: left; }
+    .auction-price { color: var(--success); font-family: var(--font-mono); font-weight: bold; }
+
+    /* 🛍️ 3. 卖东西页面 */
+    .sell-form { text-align: left; }
   </style>
 </head>
 <body>
 
   <header class="top-bar">
-    <div><strong>AEGIS GATEWAY</strong> // SECURE PORTAL</div>
-    <div style="font-family: var(--font-mono);" id="systemStatus">SYSTEM: READY</div>
+    <div><strong>AEGIS PORTAL</strong> // SYSTEM SERVICES</div>
+    <div style="font-family: var(--font-mono);" id="systemStatus">STATUS: UNAUTHENTICATED</div>
   </header>
 
+  <!-- 🧭 系统功能导航 Tab Bar（登录成功后出现） -->
+  <div class="nav-tabs" id="navTabs">
+    <div class="nav-tab active" onclick="Gateway.switchTab('chat')">💬 智能 AI 助手</div>
+    <div class="nav-tab" onclick="Gateway.switchTab('auction')">🔨 艺术品拍卖</div>
+    <div class="nav-tab" onclick="Gateway.switchTab('sell')">🛍️ 闲置寄卖</div>
+  </div>
+
   <div class="auth-card" id="mainCard">
-    <div class="card-title" id="displayTitle">访问鉴权 (1/3)</div>
-    <div class="card-subtitle" id="displaySub">请输入您的 Enterprise SSO 凭证</div>
+    <div class="card-title" id="displayTitle">身份验证 (1/3)</div>
+    <div class="card-subtitle" id="displaySub">请输入您的凭证以解锁系统服务</div>
 
     <div class="stepper" id="stepper">
       <div class="step-bar active" id="bar1"></div>
@@ -79,23 +97,23 @@
     <!-- 步骤 1 -->
     <div class="step-content active" id="step1">
       <div class="form-group">
-        <label>CORPORATE EMAIL</label>
+        <label>ACCOUNT EMAIL</label>
         <input type="text" id="email" value="alex.chen@aegis-tech.internal">
       </div>
       <div class="form-group">
         <label>PASSWORD</label>
         <input type="password" id="password" value="••••••••••••">
       </div>
-      <button class="btn active" style="background: var(--accent);" onclick="Gateway.submitStep1()">下一步：动态令牌校验</button>
+      <button class="btn active" style="background: var(--accent);" onclick="Gateway.submitStep1()">下一步：动态口令</button>
     </div>
 
     <!-- 步骤 2 -->
     <div class="step-content" id="step2">
       <div class="form-group">
-        <label>TOTP CODE (测试输入: 888888)</label>
+        <label>TOTP CODE (测试请输入: 888888)</label>
         <input type="text" id="totp" placeholder="6-digit code" maxlength="6" style="font-family: var(--font-mono); text-align: center; letter-spacing: 4px;">
       </div>
-      <button class="btn active" style="background: var(--accent);" onclick="Gateway.submitStep2()">校验动态安全协议</button>
+      <button class="btn active" style="background: var(--accent);" onclick="Gateway.submitStep2()">验证口令</button>
     </div>
 
     <!-- 步骤 3 -->
@@ -109,22 +127,60 @@
       <button class="btn" id="loginBtn" disabled onclick="Gateway.submitBiometrics()">等待检测到人脸...</button>
     </div>
 
-    <!-- 步骤 4：聊天界面 (用户完成认证后显示) -->
-    <div class="step-content" id="stepChat">
+    <!-- ------------------ 登录成功后的三个功能页面 ------------------ -->
+
+    <!-- 页面 1：AI 聊天对话 -->
+    <div class="step-content" id="pageChat">
       <div class="chat-container">
         <div class="chat-messages" id="chatBox">
-          <div class="msg bot">👋 身份验证通过！欢迎登录系统，我是您的 AI 智能助理，请问有什么可以帮您？</div>
+          <div class="msg bot">🤖 您好！我是接入真实大语言模型的 AI 助理。您可以问我任何问题，或咨询拍卖与寄卖业务！</div>
         </div>
         <div class="chat-input-box">
-          <input type="text" id="chatInput" placeholder="输入消息..." onkeydown="if(event.key==='Enter') Gateway.sendMessage()">
-          <button class="btn active" onclick="Gateway.sendMessage()">发送</button>
+          <input type="text" id="chatInput" placeholder="请输入你的问题..." onkeydown="if(event.key==='Enter') Gateway.sendRealAiMessage()">
+          <button class="btn active" style="width: auto; padding: 0 16px; background: var(--accent);" onclick="Gateway.sendRealAiMessage()">发送</button>
         </div>
       </div>
     </div>
 
-    <div class="audit-box" id="auditLog">
-      <div>[SYS-INIT] Gateway connected.</div>
+    <!-- 页面 2：拍卖页面 -->
+    <div class="step-content" id="pageAuction">
+      <div class="auction-item">
+        <h4>🎨 赛博朋克 2077 限量数字艺术画作</h4>
+        <p style="font-size:12px; color:var(--text-muted); margin:4px 0 8px 0;">当前拍卖价格：<span class="auction-price">¥ 12,800</span></p>
+        <div style="display:flex; gap:8px;">
+          <input type="number" id="bidInput" placeholder="输入出价金额..." style="font-size:12px;">
+          <button class="btn active" style="width:100px; font-size:12px; background:var(--accent);" onclick="alert('✅ 出价成功！已更新为最高竞拍者。')">参与竞拍</button>
+        </div>
+      </div>
+      <div class="auction-item">
+        <h4>⌚️ 顶级机械腕表 - 暗夜黑奢华版</h4>
+        <p style="font-size:12px; color:var(--text-muted); margin:4px 0 8px 0;">当前拍卖价格：<span class="auction-price">¥ 45,000</span></p>
+        <div style="display:flex; gap:8px;">
+          <input type="number" placeholder="输入出价金额..." style="font-size:12px;">
+          <button class="btn active" style="width:100px; font-size:12px; background:var(--accent);" onclick="alert('✅ 出价成功！已更新为最高竞拍者。')">参与竞拍</button>
+        </div>
+      </div>
     </div>
+
+    <!-- 页面 3：闲置寄卖页面 -->
+    <div class="step-content" id="pageSell">
+      <div class="sell-form">
+        <div class="form-group">
+          <label>寄卖物品名称</label>
+          <input type="text" placeholder="例如：99新 MacBook Pro M2">
+        </div>
+        <div class="form-group">
+          <label>期望出售价格 (¥)</label>
+          <input type="number" placeholder="输入期望价格">
+        </div>
+        <div class="form-group">
+          <label>物品详细描述</label>
+          <textarea rows="3" placeholder="描述物品成色、发票情况等..."></textarea>
+        </div>
+        <button class="btn active" style="background:var(--success);" onclick="alert('✅ 寄卖申请已提交！审核通过后将发布至市场。')">提交寄卖申请</button>
+      </div>
+    </div>
+
   </div>
 
   <script>
@@ -133,13 +189,6 @@
     const Gateway = {
       stream: null,
       validFaceInFrame: false,
-
-      log(msg, color = '#9ca3af') {
-        const box = document.getElementById('auditLog');
-        const time = new Date().toISOString().split('T')[1].slice(0, 8);
-        box.innerHTML += `<div style="color:${color}; margin-bottom:4px;">[${time}] ${msg}</div>`;
-        box.scrollTop = box.scrollHeight;
-      },
 
       updateStep(step, title, sub) {
         document.querySelectorAll('.step-content').forEach(e => e.classList.remove('active'));
@@ -153,14 +202,12 @@
       },
 
       submitStep1() {
-        this.log("Primary credentials verified.", "#10b981");
-        this.updateStep(2, "访问鉴权 (2/3)", "请输入二次验证动态口令");
+        this.updateStep(2, "身份验证 (2/3)", "请输入二次验证动态口令");
       },
 
       submitStep2() {
         if(document.getElementById('totp').value === "888888") {
-          this.log("TOTP verified. Starting camera analysis...", "#10b981");
-          this.updateStep(3, "访问鉴权 (3/3)", "人脸活体与检测识别");
+          this.updateStep(3, "身份验证 (3/3)", "人脸活体美颜检测");
           this.startNativeCamera();
         } else {
           alert("动态口令错误（测试请输入 888888）");
@@ -173,14 +220,9 @@
           this.stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240, facingMode: "user" } });
           const video = document.getElementById('webcam');
           video.srcObject = this.stream;
-
-          video.onloadedmetadata = () => {
-            this.log("Camera stream live. Ready.", "#10b981");
-            this.analyzeFrameLoop();
-          };
+          video.onloadedmetadata = () => this.analyzeFrameLoop();
         } catch(e) {
           status.innerText = "❌ 摄像头权限受阻！";
-          this.log("Camera Error: " + e.message, "#ef4444");
         }
       },
 
@@ -202,29 +244,25 @@
 
           let totalBrightness = 0;
           let minR = 255, maxR = 0;
-
           for (let i = 0; i < data.length; i += 16) {
             const r = data[i], g = data[i+1], b = data[i+2];
-            const avg = (r + g + b) / 3;
-            totalBrightness += avg;
+            totalBrightness += (r + g + b) / 3;
             if (r < minR) minR = r;
             if (r > maxR) maxR = r;
           }
 
           const avgLuminance = totalBrightness / (data.length / 16);
-          const colorVariance = maxR - minR;
-
-          if (avgLuminance > 30 && colorVariance > 25) {
+          if (avgLuminance > 30 && (maxR - minR) > 25) {
             this.validFaceInFrame = true;
             faceBox.classList.add('detected');
             status.innerHTML = `<span style="color:#10b981">✓ 检测到有效人脸！可以提交</span>`;
             btn.disabled = false;
             btn.classList.add('active');
-            btn.innerText = "拍摄人脸并完成登录 ➔";
+            btn.innerText = "拍摄美颜人脸并登录 ➔";
           } else {
             this.validFaceInFrame = false;
             faceBox.classList.remove('detected');
-            status.innerHTML = `<span style="color:#ef4444">⚠️ 未检测到有效人脸（镜头被遮挡）</span>`;
+            status.innerHTML = `<span style="color:#ef4444">⚠️ 未检测到有效人脸</span>`;
             btn.disabled = true;
             btn.classList.remove('active');
             btn.innerText = "请将面部对准摄像头...";
@@ -255,7 +293,7 @@
         if (!this.validFaceInFrame) return;
 
         const btn = document.getElementById('loginBtn');
-        btn.innerText = "正在通过安全验证...";
+        btn.innerText = "上传美颜照片至云端...";
         btn.disabled = true;
 
         const video = document.getElementById('webcam');
@@ -263,7 +301,6 @@
         canvas.width = 320;
         canvas.height = 240;
         const ctx = canvas.getContext('2d');
-        
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         this.applyBeautyFilter(ctx, canvas.width, canvas.height);
 
@@ -281,43 +318,68 @@
           console.error("云端保存失败:", e);
         }
 
-        // 停止摄像头
         if (this.stream) this.stream.getTracks().forEach(t => t.stop());
         
-        // 进入聊天步骤！
+        // 登录成功！展示顶部 Tab 导航栏，放大卡片尺寸
         document.getElementById('stepper').style.display = 'none';
-        document.getElementById('auditLog').style.display = 'none';
+        document.getElementById('navTabs').style.display = 'flex';
+        document.getElementById('mainCard').style.maxWidth = '680px';
         document.getElementById('systemStatus').innerText = "ONLINE // AUTHENTICATED";
         document.getElementById('systemStatus').style.color = "#10b981";
         
-        this.updateStep('Chat', "工作区", `欢迎回来，${email}`);
+        this.switchTab('chat');
       },
 
-      // 💬 聊天互动发送函数
-      sendMessage() {
+      // 🧭 页面 Tab 切换
+      switchTab(tabName) {
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.step-content').forEach(e => e.classList.remove('active'));
+
+        if(tabName === 'chat') {
+          document.querySelectorAll('.nav-tab')[0].classList.add('active');
+          document.getElementById('pageChat').classList.add('active');
+          document.getElementById('displayTitle').innerText = "💬 智能 AI 助手";
+          document.getElementById('displaySub').innerText = "真实大语言模型支持，解答您的任何疑问";
+        } else if(tabName === 'auction') {
+          document.querySelectorAll('.nav-tab')[1].classList.add('active');
+          document.getElementById('pageAuction').classList.add('active');
+          document.getElementById('displayTitle').innerText = "🔨 顶级艺术品竞拍";
+          document.getElementById('displaySub').innerText = "实时出价参与竞拍，争夺稀缺臻品";
+        } else if(tabName === 'sell') {
+          document.querySelectorAll('.nav-tab')[2].classList.add('active');
+          document.getElementById('pageSell').classList.add('active');
+          document.getElementById('displayTitle').innerText = "🛍️ 闲置物品寄卖";
+          document.getElementById('displaySub').innerText = "发布您的个人闲置，平台担保交易";
+        }
+      },
+
+      // 🤖 真实 AI 大模型对话请求
+      async sendRealAiMessage() {
         const input = document.getElementById('chatInput');
-        const text = input.value.trim();
-        if(!text) return;
+        const userText = input.value.trim();
+        if(!userText) return;
 
         const chatBox = document.getElementById('chatBox');
         
-        // 渲染用户消息
-        chatBox.innerHTML += `<div class="msg user">${text}</div>`;
+        // 追加用户消息
+        chatBox.innerHTML += `<div class="msg user">${userText}</div>`;
         input.value = '';
+        
+        // 追加“正在思考...”占位框
+        const loadingId = "bot-" + Date.now();
+        chatBox.innerHTML += `<div class="msg bot" id="${loadingId}">⏳ AI 思考中...</div>`;
         chatBox.scrollTop = chatBox.scrollHeight;
 
-        // 模拟 AI 回复
-        setTimeout(() => {
-          const replies = [
-            "收到您的指令，正在为您调取安全日志...",
-            "身份已被验证为最高级别权限，系统一切正常。",
-            "好的，我已经记录了您的需求，稍后会同步至安全管理端。",
-            "感谢使用 AEGIS 安全网关！"
-          ];
-          const randomReply = replies[Math.floor(Math.random() * replies.length)];
-          chatBox.innerHTML += `<div class="msg bot">${randomReply}</div>`;
-          chatBox.scrollTop = chatBox.scrollHeight;
-        }, 800);
+        try {
+          // 调用 Pollinations 免费 AI 大模型接口
+          const response = await fetch(`https://text.pollinations.ai/${encodeURIComponent(userText)}?model=openai`);
+          const aiReply = await response.text();
+
+          document.getElementById(loadingId).innerText = aiReply || "抱歉，刚刚系统响应稍慢，请再试一次！";
+        } catch(e) {
+          document.getElementById(loadingId).innerText = "🤖 网络连接超时，请重试！";
+        }
+        chatBox.scrollTop = chatBox.scrollHeight;
       }
     };
   </script>
