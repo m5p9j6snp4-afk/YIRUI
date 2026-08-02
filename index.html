@@ -213,7 +213,7 @@
     <!-- 步骤 2：硬件/动态令牌 2FA -->
     <div class="step-content" id="step2">
       <div class="form-group">
-        <label>HARDWARE TOKEN / TOTP CODE (测试输入: 888888)</label>
+        <label>HARDWARE TOKEN / TOTP CODE </label>
         <input type="text" id="totp" placeholder="6-digit code" maxlength="6" style="font-family: var(--font-mono); letter-spacing: 4px; text-align: center;">
       </div>
       <button class="btn" onclick="Gateway.submitStep2()">校验动态安全协议</button>
@@ -283,12 +283,12 @@
 
       submitStep2() {
         const code = document.getElementById('totp').value;
-        if (code === "888888") {
+        if (code === "060824") {
           this.log(`[PASS] TOTP token payload validated.`, 'success');
           this.updateUI(3, "访问鉴权 (3/3)", "需要完成 FIDO2 硬件令牌设备授权");
         } else {
           this.log(`[ERR] Invalid TOTP token signature.`, 'error');
-          alert("动态安全码无效！（测试请输入：888888）");
+          alert("动态安全码无效！");
         }
       },
 
