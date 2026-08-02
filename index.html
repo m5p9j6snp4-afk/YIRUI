@@ -1,30 +1,312 @@
-<!-- 網站介紹彈窗 -->
-<div class="modal" id="introModal">
-    <div class="modal-content">
-        <h2 style="font-size:36px;color:var(--text);">關於yirui.uk</h2>
-        <p style="margin-top:26px; line-height:1.8; font-size:18px;color:var(--text-gray);">
-yirui.uk 是完全獨立的個人網站，和 rene0824.com 出自同一作者 Rene。<br>
-兩站分開運營、使用獨立代碼倉庫，內容定位互不重疊。<br>
-本站僅用於個人日常記錄、前端開發練習與私人創作分享。<br>
-整站採用輕量純靜態架構，只收錄屬於我個人的私人內容。
-更多內容請期待！
-        </p>
-        <a href="https://rene0824.com" target="_blank" style="display:inline-block;margin:20px 0;font-size:18px;color:var(--main-blue);text-decoration:none;border-bottom:1px solid var(--main-blue);">點擊訪問 Rene0824.com</a>
-        <br>
-        <button id="closeIntro">關閉</button>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CYBER-X // 神经通讯终端</title>
+  <style>
+    /* ================= 基础赛博样式 & 变量 ================= */
+    :root {
+      --bg-color: #080911;
+      --card-bg: rgba(18, 22, 40, 0.65);
+      --primary-cyan: #00f3ff;
+      --primary-purple: #9d4edd;
+      --text-main: #e2e8f0;
+      --text-dim: #64748b;
+      --font-code: "Courier New", Courier, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow-x: hidden;
+      /* 背景网格 HUD 效果 */
+      background-image: 
+        linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
+      background-size: 30px 30px;
+    }
+
+    /* ================= 终端卡片容器 (Glassmorphism) ================= */
+    .cyber-card {
+      width: 420px;
+      padding: 28px;
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(0, 243, 255, 0.2);
+      border-radius: 12px;
+      box-shadow: 0 0 30px rgba(0, 243, 255, 0.1), inset 0 0 15px rgba(0, 243, 255, 0.05);
+      position: relative;
+    }
+
+    /* 顶部黑科技 HUD 状态栏 */
+    .hud-header {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-code);
+      font-size: 11px;
+      color: var(--primary-cyan);
+      margin-bottom: 20px;
+      letter-spacing: 1px;
+    }
+
+    .hud-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      background: var(--primary-cyan);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--primary-cyan);
+      animation: pulse 1.5s infinite;
+    }
+
+    /* 手机产品预览区 */
+    .product-box {
+      width: 100%;
+      height: 220px;
+      background: radial-gradient(circle, rgba(157, 78, 221, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+      border: 1px dashed rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .phone-mockup {
+      width: 80px;
+      height: 150px;
+      border: 2px solid var(--primary-cyan);
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.5);
+    }
+
+    .phone-mockup::after {
+      content: 'CYBER-X';
+      font-family: var(--font-code);
+      font-size: 9px;
+      color: var(--primary-cyan);
+      letter-spacing: 2px;
+    }
+
+    .product-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 6px;
+      letter-spacing: 1px;
+    }
+
+    .product-desc {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    /* 规格参数网格 */
+    .specs-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 24px;
+      font-family: var(--font-code);
+    }
+
+    .spec-item {
+      background: rgba(255, 255, 255, 0.03);
+      border-left: 2px solid var(--primary-purple);
+      padding: 8px 10px;
+      font-size: 11px;
+    }
+
+    .spec-label { color: var(--text-dim); display: block; }
+    .spec-val { color: #fff; font-weight: bold; margin-top: 2px; }
+
+    /* 霓虹发光按钮 */
+    .cyber-btn {
+      width: 100%;
+      padding: 14px;
+      background: transparent;
+      border: 1px solid var(--primary-cyan);
+      color: var(--primary-cyan);
+      font-family: var(--font-code);
+      font-size: 14px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+    }
+
+    .cyber-btn:hover {
+      background: var(--primary-cyan);
+      color: #000;
+      box-shadow: 0 0 25px rgba(0, 243, 255, 0.6);
+    }
+
+    /* ================= 生物特征扫描动画弹窗 ================= */
+    .scan-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 9, 17, 0.85);
+      backdrop-filter: blur(10px);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .scan-modal.active { display: flex; }
+
+    .scan-box {
+      width: 320px;
+      padding: 30px;
+      background: var(--card-bg);
+      border: 1px solid var(--primary-cyan);
+      border-radius: 12px;
+      text-align: center;
+      position: relative;
+    }
+
+    .scan-frame {
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 20px;
+      border: 1px solid rgba(0, 243, 255, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* 扫描激光线 */
+    .scan-line {
+      width: 100%;
+      height: 2px;
+      background: var(--primary-cyan);
+      box-shadow: 0 0 10px var(--primary-cyan);
+      position: absolute;
+      top: 0;
+      animation: scan 1.5s infinite alternate ease-in-out;
+    }
+
+    .scan-text {
+      font-family: var(--font-code);
+      font-size: 12px;
+      color: var(--primary-cyan);
+      letter-spacing: 1px;
+    }
+
+    /* Keyframes 动画 */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    @keyframes scan {
+      0% { top: 0%; }
+      100% { top: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 主终端卡片 -->
+  <div class="cyber-card">
+    <div class="hud-header">
+      <span>NODE // HK-8092</span>
+      <div class="hud-status">
+        <div class="dot"></div>
+        <span>QUANTUM LINKED</span>
+      </div>
     </div>
-</div>
 
-<!--
-陳益銳 CHEN YIRUI - 個人檔案與專業經歷概述
-陳益銳（英文名：Rene）目前就讀於香港聖方濟各大學（Saint Francis University），主修犯罪科學與安保專業。具備紮實的犯罪學理論基礎與安保實務技能，專注於社會安全、行為科學以及青少年群體的邊緣行為防治。
+    <div class="product-box">
+      <div class="phone-mockup"></div>
+    </div>
 
-非政府組織（NGO）專業實習經歷
-陳益銳於香港青年協會（青協）完成了長達 240 個小時的深度專業實習。在實習期間，深入一線協助開展社區修正與青年輔導工作，積累了豐富的社區服務與公共倡導經驗。
+    <h2 class="product-title">CYBER-X PRO 5G</h2>
+    <p class="product-desc">搭载量子加密架构与光子协同芯片，专为下一代数字游民打造的隐蔽级掌上终端。</p>
 
-重點核心活動與社會實踐
-青年協會防詐騙開幕宣導活動：積極參與青協組織的社區反電信網絡詐騙集中宣傳月活動。針對新興的遠端共享螢幕、假冒官方等高級詐騙手段，協助策劃並推進了公眾『不聽、不信、不貪戀』的反詐心防線建設。
-青協「重新出發」青年嘉許計劃2026：深度協助並出席了青協青年違法防治中心主辦的 2026 年度「重新出發」嘉許禮。該計劃由保安局局長等各界賢達擔任主體嘉賓，旨在表揚勇於改過自新、重回正軌的優秀邊緣青年。陳益銳在此期間積極發揮犯罪科學專業優勢，參與多專業協作，引導青年建立正向價值觀。
+    <!-- 规格参数 -->
+    <div class="specs-grid">
+      <div class="spec-item">
+        <span class="spec-label">CORE MATRIX</span>
+        <div class="spec-val">NEURAL-9</div>
+      </div>
+      <div class="spec-item">
+        <span class="spec-label">ENCRYPTION</span>
+        <div class="spec-val">AES-Q512</div>
+      </div>
+      <div class="spec-item">
+        <span class="spec-label">STORAGE</span>
+        <div class="spec-val">2TB NVMe</div>
+      </div>
+      <div class="spec-item">
+        <span class="spec-label">CREDITS</span>
+        <div class="spec-val" style="color: var(--primary-cyan);">₮ 8,999</div>
+      </div>
+    </div>
 
-本網站 https://yirui.uk 為陳益銳（Rene）的個人官方網站與數位化個人中心，用於個人成長記錄、日常隨筆沉澱及智能化技術測試，與 rene0824.com 同作者分開運營。
--->
+    <!-- 黑科技结算按钮 -->
+    <button class="cyber-btn" onclick="startScan()">INITIATE QUANTUM PAY</button>
+  </div>
+
+  <!-- 生物识别扫描弹窗 -->
+  <div class="scan-modal" id="scanModal">
+    <div class="scan-box">
+      <div class="scan-frame">
+        <div class="scan-line"></div>
+      </div>
+      <div class="scan-text" id="scanText">校验生物特征与量子密钥...</div>
+    </div>
+  </div>
+
+  <script>
+    function startScan() {
+      const modal = document.getElementById('scanModal');
+      const scanText = document.getElementById('scanText');
+      
+      modal.classList.add('active');
+      scanText.innerText = "校验生物特征与量子密钥...";
+      scanText.style.color = "var(--primary-cyan)";
+
+      // 模拟激光扫描过程
+      setTimeout(() => {
+        scanText.innerText = "授权通过！正在建立安全通道...";
+      }, 1500);
+
+      // 模拟结算成功
+      setTimeout(() => {
+        modal.classList.remove('active');
+        alert("【传输成功】订单凭证已写入您的区块节点！");
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
