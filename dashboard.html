@@ -3,42 +3,248 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CORE DASHBOARD // 核心系统</title>
+  <title>AEGIS // SOC Security Dashboard</title>
   <script>
-    // 使用 sessionStorage 校验：只要刷新 index 或者直接强闯，就会被重定向弹回门禁！
+    // 强制零信任安全拦截：无有效 Session 直接弹回 index.html
     if (sessionStorage.getItem("AUTHENTICATED_SESSION") !== "TRUE") {
-      alert("⚠️ 访问已失效或未经授权！请重新完成人脸与多层验证！");
+      alert("⚠️ [SECURITY ALERT] 无有效会话凭证！请重新完成多层身份与人脸校验。");
       window.location.href = "index.html";
     }
   </script>
   <style>
+    :root {
+      --bg: #090d16;
+      --panel: #111827;
+      --panel-header: #1f2937;
+      --border: #1f2937;
+      --text-main: #f9fafb;
+      --text-muted: #9ca3af;
+      --accent: #2563eb;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+
     body {
-      background: #090d16; color: #10b981; font-family: monospace;
-      padding: 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh;
+      background-color: var(--bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
-    .box {
-      border: 1px solid #10b981; padding: 30px; border-radius: 8px;
-      box-shadow: 0 0 20px rgba(16,185,129,0.1); text-align: center; max-width: 500px; background: #111827;
+
+    /* 顶栏 Header */
+    header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid var(--success);
+      color: var(--success);
+      border-radius: 20px;
+      font-size: 12px;
+      font-family: var(--font-mono);
+    }
+
+    .dot { width: 6px; height: 6px; background: var(--success); border-radius: 50%; }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 13px;
+    }
+
+    .session-timer {
+      font-family: var(--font-mono);
+      color: var(--warning);
+      background: rgba(245, 158, 11, 0.1);
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+
     .btn-logout {
-      margin-top: 20px; padding: 10px 20px; background: #ef4444;
-      color: white; border: none; font-family: monospace; cursor: pointer; border-radius: 4px;
+      padding: 6px 14px;
+      background: var(--danger);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: opacity 0.2s;
     }
+
+    .btn-logout:hover { opacity: 0.85; }
+
+    /* 主要仪表盘布局 */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      padding: 24px;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+    }
+
+    .card-title {
+      font-size: 13px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .stat-number {
+      font-size: 28px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      margin-bottom: 8px;
+    }
+
+    .stat-desc { font-size: 12px; color: var(--text-muted); }
+
+    /* 动态模拟日志窗口 */
+    .console-box {
+      grid-column: 1 / -1;
+      background: #000;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      height: 220px;
+      overflow-y: auto;
+    }
+
+    .log-entry { margin-bottom: 6px; display: flex; gap: 12px; }
+    .log-time { color: #6b7280; }
+    .log-type { color: var(--accent); min-width: 80px; }
+    .log-msg { color: #d1d5db; }
   </style>
 </head>
 <body>
 
-  <div class="box">
-    <h1>[ AUTHENTICATED ACCESS ]</h1>
-    <p style="margin-top: 15px; color: #9ca3af;">人脸生物特征比对通过，会话已激活。</p>
-    <button class="btn-logout" onclick="logout()">锁定系统并退出</button>
-  </div>
+  <!-- 顶部状态栏 -->
+  <header>
+    <div class="brand">
+      <span style="color: var(--accent);">AEGIS //</span> SOC SECURITY CONTROL
+      <span class="status-badge"><span class="dot"></span> ZERO-TRUST ENFORCED</span>
+    </div>
+
+    <div class="user-profile">
+      <span>USER: <strong>alex.chen@aegis-tech.internal</strong></span>
+      <span class="session-timer">TTL: <span id="timer">15:00</span></span>
+      <button class="btn-logout" onclick="logout()">锁定并退出</button>
+    </div>
+  </header>
+
+  <!-- 仪表盘主体卡片 -->
+  <main class="dashboard-grid">
+    
+    <!-- 卡片 1 -->
+    <div class="card">
+      <div class="card-title">Active Tunnels <span>TLS 1.3</span></div>
+      <div class="stat-number" style="color: var(--success);" id="tunnels">1,248</div>
+      <div class="stat-desc">加密零信任节点流量接入中</div>
+    </div>
+
+    <!-- 卡片 2 -->
+    <div class="card">
+      <div class="card-title">Threat Mitigations <span>24h</span></div>
+      <div class="stat-number" style="color: var(--accent);">84,210</div>
+      <div class="stat-desc">已拦截的网络攻击与非法探针</div>
+    </div>
+
+    <!-- 卡片 3 -->
+    <div class="card">
+      <div class="card-title">Biometric Auth Status</div>
+      <div class="stat-number" style="color: var(--success);">VERIFIED</div>
+      <div class="stat-desc">人脸识别匹配度 99.8% (FaceMesh Active)</div>
+    </div>
+
+    <!-- 实时控制台终端日志 -->
+    <div class="card console-box" id="consoleBox">
+      <div class="log-entry">
+        <span class="log-time">[SYSTEM]</span>
+        <span class="log-type">[AUTH]</span>
+        <span class="log-msg" style="color: var(--success);">Session initialized. WebAuthn & Facial biometrics verified.</span>
+      </div>
+    </div>
+
+  </main>
 
   <script>
+    // 1. 退出登录逻辑
     function logout() {
       sessionStorage.clear();
       window.location.href = "index.html";
     }
+
+    // 2. 模拟 Session 倒计时 (15分钟)
+    let timeLeft = 900;
+    setInterval(() => {
+      if (timeLeft <= 0) logout();
+      const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+      const s = (timeLeft % 60).toString().padStart(2, '0');
+      document.getElementById('timer').innerText = `${m}:${s}`;
+      timeLeft--;
+    }, 1000);
+
+    // 3. 动态模拟系统威胁日志输出
+    const threats = [
+      "Blocked unauthorized SSH brute-force from 192.168.1.104",
+      "TLS handshake re-keying successfully executed for node-us-east",
+      "API Gateway rate-limiting applied to edge proxy #82",
+      "Zero-Trust Policy Rule #441 automatically updated",
+      "Facial session heart-beat response acknowledged (Token active)"
+    ];
+
+    setInterval(() => {
+      const box = document.getElementById('consoleBox');
+      const time = new Date().toISOString().split('T')[1].slice(0, 8);
+      const randomMsg = threats[Math.floor(Math.random() * threats.length)];
+
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      entry.innerHTML = `
+        <span class="log-time">[${time}]</span>
+        <span class="log-type">[SOC-MONITOR]</span>
+        <span class="log-msg">${randomMsg}</span>
+      `;
+      box.appendChild(entry);
+      box.scrollTop = box.scrollHeight;
+    }, 3000);
   </script>
 </body>
 </html>
