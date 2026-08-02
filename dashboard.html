@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CORE DASHBOARD // 核心系统</title>
+  <script>
+    // 门卫拦截：未经过多层验证强行访问，直接踢回 index.html
+    if (localStorage.getItem("SECURE_AUTH_TOKEN") !== "GRANTED_LEVEL_ROOT") {
+      alert("⚠️ 拒绝访问！请先完成多层身份校验！");
+      window.location.href = "index.html";
+    }
+  </script>
+  <style>
+    body {
+      background: #05070f; color: #00ff66; font-family: monospace;
+      padding: 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh;
+    }
+    .box {
+      border: 1px solid #00ff66; padding: 30px; border-radius: 8px;
+      box-shadow: 0 0 20px rgba(0,255,102,0.2); text-align: center; max-width: 500px;
+    }
+    .btn-logout {
+      margin-top: 20px; padding: 10px 20px; background: #ff0055;
+      color: white; border: none; font-family: monospace; cursor: pointer; border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="box">
+    <h1>[ ACCESS GRANTED ]</h1>
+    <p style="margin-top: 15px; color: #e2e8f0;">欢迎来到赛博核心控制台！你已通过三层节点验证。</p>
+    <button class="btn-logout" onclick="logout()">锁定并退出系统</button>
+  </div>
+
+  <script>
+    function logout() {
+      localStorage.removeItem("SECURE_AUTH_TOKEN");
+      window.location.href = "index.html";
+    }
+  </script>
+</body>
+</html>
