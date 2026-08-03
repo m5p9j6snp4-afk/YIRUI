@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>黑市二手寄卖 & 极客拍卖大厅</title>
-  <!-- 引入更稳定的 face-api 库 -->
-  <script defer src="https://unpkg.com/@vladmandic/face-api@1.7.1/dist/face-api.min.js"></script>
+  <!-- 切换为更稳定且支持国内访问的 jsDelivr CDN -->
+  <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.1/dist/face-api.min.js"></script>
   <style>
     :root { --bg: #0b0f19; --card-bg: #111827; --accent: #2563eb; --accent-hover: #1d4ed8; --text: #f3f4f6; --text-muted: #9ca3af; --border: #1f2937; }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
@@ -146,8 +146,8 @@
         }
 
         try {
-          // 切换到 unpkg 的稳定模型源
-          const MODEL_URL = 'https://unpkg.com/@vladmandic/face-api@1.7.1/model/';
+          // 对应 CDN 切换至 jsDelivr 加载模型
+          const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.1/model/';
           await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
           await faceapi.nets.faceLandmarkTinyNet.loadFromUri(MODEL_URL);
           await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
