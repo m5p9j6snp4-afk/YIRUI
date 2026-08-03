@@ -154,10 +154,10 @@
         }
 
         try {
-const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.1/model/';
-await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-await faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL); // 注意这里变了
-await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+          const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.1/model/';
+          await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+          await faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL); // 注意这里变了
+          await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
 
 
           camStatus.innerText = "⏳ 正在同步云端人脸库...";
