@@ -8,7 +8,7 @@
     :root { --bg: #0b0f19; --card-bg: #111827; --accent: #2563eb; --text: #f3f4f6; --text-muted: #9ca3af; --border: #1f2937; }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
     body { background: var(--bg); color: var(--text); padding: 20px; }
-    .container { max-width: 1100px; margin: 0 auto; display: none; } /* 默认隐藏，密码正确后显示 */
+    .container { max-width: 1100px; margin: 0 auto; display: none; } /* 默认隐藏，验证密码后显示 */
     h1 { font-size: 20px; margin-bottom: 20px; color: #38bdf8; display: flex; justify-content: space-between; align-items: center; }
     .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
     .stat-card { background: var(--card-bg); border: 1px solid var(--border); padding: 15px; border-radius: 8px; }
@@ -66,6 +66,7 @@
         <thead>
           <tr>
             <th>抓拍照片</th>
+            <th>访客姓名</th>
             <th>电子邮箱</th>
             <th>IP 地址</th>
             <th>国家/地区</th>
@@ -73,7 +74,7 @@
           </tr>
         </thead>
         <tbody id="logsTableBody">
-          <tr><td colspan="5" style="text-align:center; color:var(--text-muted);">正在加载日志...</td></tr>
+          <tr><td colspan="6" style="text-align:center; color:var(--text-muted);">正在加载日志...</td></tr>
         </tbody>
       </table>
     </div>
@@ -81,7 +82,7 @@
 
   <script>
     const WORKER_URL = "https://api.yirui.uk";
-    const ADMIN_PASSWORD = "Rene0824"; // 👈 在这里修改你的后台管理密码
+    const ADMIN_PASSWORD = "admin888"; // 👈 你的后台管理密码
 
     function verifyPwd() {
       const inputVal = document.getElementById('pwdInput').value;
@@ -97,7 +98,7 @@
 
     async function loadAdminData() {
       const tbody = document.getElementById('logsTableBody');
-      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">⏳ 正在同步云端数据...</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted);">⏳ 正在同步云端数据...</td></tr>`;
 
       try {
         const res = await fetch(`${WORKER_URL}?type=logs`);
@@ -107,7 +108,7 @@
         document.getElementById('statCount').innerText = logs.length;
 
         if (!logs || logs.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">暂无访客抓拍记录</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted);">暂无访客抓拍记录</td></tr>`;
           return;
         }
 
@@ -117,6 +118,7 @@
           html += `
             <tr>
               <td>${photoHtml}</td>
+              <td style="font-weight:bold; color:#38bdf8;">${log.name || '匿名极客'}</td>
               <td>${log.email || '未填写'}</td>
               <td>${log.ip || '未知'}</td>
               <td>${log.country || '未知'}</td>
@@ -127,7 +129,7 @@
 
       } catch (e) {
         console.error("加载后台日志失败", e);
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#f87171;">❌ 加载失败: ${e.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#f87171;">❌ 加载失败: ${e.message}</td></tr>`;
       }
     }
   </script>
