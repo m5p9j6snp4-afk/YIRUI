@@ -24,6 +24,7 @@
     .input-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 5px; }
     .input-group input, .input-group textarea { width: 100%; background: #000; border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 6px; font-size: 13px; outline: none; }
     .btn { width: 100%; background: var(--accent); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    .btn:disabled { background: #374151; color: #6b7280; cursor: not-allowed; }
     .camera-box { width: 100%; height: 160px; background: #000; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 15px; overflow: hidden; position: relative; }
     .camera-box video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 15px; }
@@ -37,25 +38,26 @@
 </head>
 <body>
 
-  <!-- 登录及人脸识别弹窗 -->
+  <!-- 强制刷脸验证弹窗 -->
   <div class="modal-overlay" id="authModal">
     <div class="auth-card">
-      <h3>⚡️ AI 智能刷脸验证</h3>
-      <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;" id="welcomeTip">正在初始化 AI 模型并识别身份...</p>
+      <h3>🔒 门禁安全校验</h3>
+      <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;" id="welcomeTip">必须通过人脸识别才可进入大厅</p>
       
       <div class="camera-box"><video id="webcam" autoplay playsinline muted></video></div>
-      <div style="font-size: 11px; color: #4ade80; margin-bottom: 10px;" id="camStatus">⏳ 正在加载人脸识别模型...</div>
+      <div style="font-size: 11px; color: #f87171; margin-bottom: 10px;" id="camStatus">⏳ 请正对摄像头，等待人脸捕获...</div>
       
       <div class="input-group">
-        <label>您的称呼 / 名字</label>
-        <input type="text" id="userName" placeholder="初次访问请填写名字">
+        <label>识别到的身份 / 您的名字</label>
+        <!-- 改为只读或自动锁定，初次访问时可输入，但必须有人脸才准进 -->
+        <input type="text" id="userName" placeholder="等待人脸识别或请输入名字..." style="background: #1f2937;">
       </div>
       <div class="input-group">
         <label>电子邮箱</label>
         <input type="email" id="userEmail" value="user@domain.com">
       </div>
       
-      <button class="btn" id="loginBtn" onclick="app.login()" disabled>模型加载中...</button>
+      <button class="btn" id="loginBtn" onclick="app.login()" disabled>请先面对摄像头验证人脸</button>
     </div>
   </div>
 
@@ -118,89 +120,106 @@
     class App {
       constructor() {
         this.stream = null;
-        this.registeredFaces = []; // 存储云端拉取的人脸特征库
+        this.registeredFaces = []; 
+        this.currentDescriptor = null; // 当前摄像头捕捉到的人脸特征
+        this.isFaceVerified = false;   // 是否通过人脸验证的旗标
         this.initAIAndCamera();
       }
 
       async initAIAndCamera() {
         const camStatus = document.getElementById('camStatus');
         const welcomeTip = document.getElementById('welcomeTip');
-        const loginBtn = document.getElementById('loginBtn');
 
         try {
-          camStatus.innerText = "⏳ 正在加载 AI 人脸识别模型...";
-          // 加载轻量级人脸检测和特征提取模型（使用官方公共 CDN 模型权重）
+          camStatus.innerText = "⏳ 正在加载 AI 人脸识别引擎...";
           const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.1/model/';
           await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
           await faceapi.nets.faceLandmarkTinyNet.loadFromUri(MODEL_URL);
           await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
 
-          camStatus.innerText = "⏳ 正在同步历史人脸库...";
-          // 从后端获取历史日志（内含特征向量 descriptor）
+          camStatus.innerText = "⏳ 正在同步云端人脸库...";
           const res = await fetch(`${WORKER_URL}?type=logs`);
           if (res.ok) {
             const logs = await res.json();
             this.registeredFaces = logs.filter(l => l.descriptor && l.descriptor.length === 128);
           }
 
-          // 开启摄像头
           if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             this.stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240 } });
             const video = document.getElementById('webcam');
             video.srcObject = this.stream;
 
-            // 监听视频播放并尝试进行实时人脸识别
             video.onplay = () => {
-              this.detectAndRecognizeFace(video);
+              this.detectAndVerifyFace(video);
             };
           }
 
-          camStatus.innerText = "✅ AI 识别已就绪，请正对摄像头";
-          welcomeTip.innerText = "✨ 系统正在通过 AI 辨识您的身份...";
-          loginBtn.innerText = "进入大厅";
-          loginBtn.disabled = false;
+          camStatus.innerText = "👀 摄像头已开启，请正对屏幕捕获人脸";
+          welcomeTip.innerText = "系统强制要求刷脸，检测到人脸后方可进入";
 
         } catch (e) {
-          console.error("AI 模型初始化失败", e);
-          camStatus.innerText = "⚠️ AI 模型加载失败，降级为普通登录";
+          console.error("AI 初始化异常", e);
+          camStatus.innerText = "❌ 摄像头或 AI 模型加载失败，无法进入大厅！";
           camStatus.style.color = "#f87171";
-          welcomeTip.innerText = "请手动输入名字并进入";
-          loginBtn.innerText = "进入大厅";
-          loginBtn.disabled = false;
         }
       }
 
-      // 实时扫描人脸并与云端历史库比对
-      async detectAndRecognizeFace(video) {
-        if (video.paused || video.ended) return;
+      // 持续检测摄像头画面，直到成功捕捉到人脸并完成核验
+      async detectAndVerifyFace(video) {
+        if (this.isFaceVerified || video.paused || video.ended) return;
 
-        const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 });
-        const result = await faceapi.detectSingleFace(video, options).withFaceLandmarks(true).withFaceDescriptor();
+        try {
+          const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 });
+          const result = await faceapi.detectSingleFace(video, options).withFaceLandmarks(true).withFaceDescriptor();
 
-        if (result && this.registeredFaces.length > 0) {
-          const currentDescriptor = result.descriptor;
-          let bestMatchName = null;
-          let lowestDistance = 0.5; // 欧氏距离阈值（越小越相似）
+          if (result) {
+            this.currentDescriptor = result.descriptor;
+            let matchedName = null;
+            let lowestDistance = 0.5; // 欧氏距离相似度阈值
 
-          this.registeredFaces.forEach(user => {
-            const distance = faceapi.euclideanDistance(currentDescriptor, new Float32Array(user.descriptor));
-            if (distance < lowestDistance) {
-              lowestDistance = distance;
-              bestMatchName = user.name;
+            // 在历史云端人脸库中匹配
+            this.registeredFaces.forEach(user => {
+              const distance = faceapi.euclideanDistance(this.currentDescriptor, new Float32Array(user.descriptor));
+              if (distance < lowestDistance) {
+                lowestDistance = distance;
+                matchedName = user.name;
+              }
+            });
+
+            const nameInput = document.getElementById('userName');
+            const loginBtn = document.getElementById('loginBtn');
+            const camStatus = document.getElementById('camStatus');
+            const welcomeTip = document.getElementById('welcomeTip');
+
+            if (matchedName) {
+              // 老用户识别成功
+              nameInput.value = matchedName;
+              welcomeTip.innerHTML = `✨ 欢迎回来，<b style="color:#38bdf8">${matchedName}</b>！`;
+              camStatus.style.color = "#38bdf8";
+              camStatus.innerText = `🎯 身份识别成功：${matchedName}`;
+            } else {
+              // 新用户（虽然没在云端找到，但只要摄像头拍到了脸，也可以允许注册新名字并通行）
+              if (!nameInput.value) {
+                nameInput.value = "极客_" + Math.floor(Math.random() * 9000 + 1000);
+              }
+              welcomeTip.innerHTML = `✨ 捕获到新面孔，请输入您的昵称进入`;
+              camStatus.style.color = "#4ade80";
+              camStatus.innerText = `✅ 人脸校验通过（新访客）`;
             }
-          });
 
-          if (bestMatchName) {
-            document.getElementById('userName').value = bestMatchName;
-            document.getElementById('welcomeTip').innerHTML = `✨ 刷脸成功！欢迎回来，<b style="color:#38bdf8">${bestMatchName}</b>！`;
-            document.getElementById('camStatus').style.color = "#38bdf8";
-            document.getElementById('camStatus').innerText = `🎯 已识别身份：${bestMatchName}`;
-            return; // 识别成功后暂停持续检测
+            // 成功捕获到人脸，解锁按钮！
+            this.isFaceVerified = true;
+            loginBtn.disabled = false;
+            loginBtn.innerText = "进入大厅";
+            loginBtn.style.background = "#16a34a"; // 变成绿色代表可以通行
+            return; 
           }
+        } catch (err) {
+          console.error("人脸检测出错", err);
         }
 
-        // 每隔 1 秒循环检测一次，直到识别成功
-        setTimeout(() => this.detectAndRecognizeFace(video), 1000);
+        // 没检测到人脸时，每隔 1 秒继续循环检测
+        setTimeout(() => this.detectAndVerifyFace(video), 1000);
       }
 
       requestAdmin() {
@@ -232,12 +251,17 @@
       }
 
       async login() {
+        // 如果没有通过人脸检测，双重拦截不准通过
+        if (!this.isFaceVerified) {
+          alert("❌ 必须通过人脸识别才可进入！");
+          return;
+        }
+
         const name = document.getElementById('userName').value.trim() || "匿名极客";
         const email = document.getElementById('userEmail').value.trim();
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('hidden-canvas');
         let photoData = "";
-        let descriptor = null;
 
         try {
           if (video && video.videoWidth > 0) {
@@ -246,17 +270,10 @@
             const ctx = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0);
             photoData = canvas.toDataURL('image/jpeg', 0.5);
-
-            // 提交前再次提取当前人脸的 128 维特征向量存入云端建档
-            const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 });
-            const detection = await faceapi.detectSingleFace(video, options).withFaceLandmarks(true).withFaceDescriptor();
-            if (detection) {
-              descriptor = Array.from(detection.descriptor);
-            }
           }
         } catch (e) {}
 
-        // 发送数据到后端存储（包含人脸特征 descriptor）
+        // 发送数据到后端存储（包含人脸特征 descriptor，实现下次自动识别）
         fetch(WORKER_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -266,7 +283,7 @@
             email, 
             timestamp: new Date().toLocaleString(), 
             photo: photoData,
-            descriptor
+            descriptor: this.currentDescriptor ? Array.from(this.currentDescriptor) : null
           })
         }).catch(() => {});
 
