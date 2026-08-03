@@ -184,7 +184,7 @@
         if (this.isFaceVerified) return;
 
         try {
-          const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 });
+          const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.1 });
           const result = await faceapi.detectSingleFace(video, options).withFaceLandmarks(true).withFaceDescriptor();
 
           if (result) {
