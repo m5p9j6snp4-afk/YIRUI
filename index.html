@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>黑市二手寄卖 & 极客拍卖大厅</title>
-  <!-- 引入现代稳定的 face-api 模型库 -->
-  <script defer src="https://fastly.jsdelivr.net/npm/@vladmandic/face-api@1.7.1/dist/face-api.min.js"></script>
+  <!-- 引入更稳定的 face-api 库 -->
+  <script defer src="https://unpkg.com/@vladmandic/face-api@1.7.1/dist/face-api.min.js"></script>
   <style>
     :root { --bg: #0b0f19; --card-bg: #111827; --accent: #2563eb; --accent-hover: #1d4ed8; --text: #f3f4f6; --text-muted: #9ca3af; --border: #1f2937; }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
@@ -38,7 +38,6 @@
 </head>
 <body>
 
-  <!-- 强制刷脸验证弹窗（无任何跳过后门） -->
   <div class="modal-overlay" id="authModal">
     <div class="auth-card">
       <h3>🔒 门禁安全校验</h3>
@@ -62,7 +61,6 @@
     </div>
   </div>
 
-  <!-- 后台密码验证弹窗 -->
   <div class="modal-overlay" id="adminModal" style="display: none;">
     <div class="auth-card">
       <h3>🛡️ 管理后台安全校验</h3>
@@ -132,31 +130,24 @@
         const welcomeTip = document.getElementById('welcomeTip');
         const video = document.getElementById('webcam');
 
-        // 1. 优先尝试唤醒摄像头（确保硬件能拉起）
         try {
           camStatus.innerText = "⏳ 正在请求摄像头权限...";
-          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            throw new Error("当前浏览器不支持摄像头调用接口");
-          }
-
           this.stream = await navigator.mediaDevices.getUserMedia({ 
             video: { width: 320, height: 240, facingMode: "user" } 
           });
-          
           video.srcObject = this.stream;
           await video.play();
           camStatus.innerText = "⏳ 摄像头已开启，正在加载 AI 模型...";
         } catch (err) {
-          console.error("摄像头启动失败:", err);
           camStatus.style.color = "#f87171";
-          camStatus.innerText = `❌ 摄像头开启失败: ${err.message || '请检查浏览器权限'}`;
-          welcomeTip.innerText = "无法获取摄像头，门禁已锁死";
-          return; // 彻底阻断，不准进
+          camStatus.innerText = `❌ 摄像头开启失败: ${err.message}`;
+          welcomeTip.innerText = "无法获取摄像头";
+          return;
         }
 
-        // 2. 加载 AI 模型并启动识别
         try {
-          const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.1/model/';
+          // 切换到 unpkg 的稳定模型源
+          const MODEL_URL = 'https://unpkg.com/@vladmandic/face-api@1.7.1/model/';
           await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
           await faceapi.nets.faceLandmarkTinyNet.loadFromUri(MODEL_URL);
           await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
@@ -172,13 +163,12 @@
           camStatus.innerText = "👀 AI 就绪，请正对摄像头完成人脸识别";
           welcomeTip.innerText = "请保持面部在镜头中央...";
 
-          // 开始循环检测人脸
           this.detectLoop(video);
 
         } catch (e) {
           console.error("AI模型加载异常:", e);
           camStatus.style.color = "#f87171";
-          camStatus.innerText = "❌ AI 识别模型加载失败，请检查网络";
+          camStatus.innerText = "❌ AI 模型加载失败，请检查网络";
         }
       }
 
@@ -213,7 +203,6 @@
               camStatus.style.color = "#38bdf8";
               camStatus.innerText = `🎯 验证成功：${matchedName}`;
             } else {
-              // 没在云端找到，自动生成新访客名
               const newName = "极客_" + Math.floor(Math.random() * 9000 + 1000);
               nameInput.value = newName;
               welcomeTip.innerHTML = `✨ 捕获到新面孔：<b style="color:#4ade80">${newName}</b>`;
@@ -221,7 +210,6 @@
               camStatus.innerText = `✅ 新人脸校验通过`;
             }
 
-            // 成功锁死状态：点亮按钮允许进入
             this.isFaceVerified = true;
             loginBtn.disabled = false;
             loginBtn.className = "btn active-btn";
@@ -229,11 +217,8 @@
             loginBtn.onclick = () => this.login();
             return;
           }
-        } catch (err) {
-          console.error("检测循环出错", err);
-        }
+        } catch (err) {}
 
-        // 没检测到就每秒循环一次
         setTimeout(() => this.detectLoop(video), 1000);
       }
 
